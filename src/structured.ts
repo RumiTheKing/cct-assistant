@@ -587,13 +587,12 @@ async function flagNamedCell(
                 textFormat: foregroundColor
                   ? {
                       foregroundColor,
-                      bold: true,
                     }
                   : undefined,
               },
             },
             fields: foregroundColor
-              ? 'userEnteredFormat.backgroundColor,userEnteredFormat.textFormat.foregroundColor,userEnteredFormat.textFormat.bold'
+              ? 'userEnteredFormat.backgroundColor,userEnteredFormat.textFormat.foregroundColor'
               : 'userEnteredFormat.backgroundColor',
           },
         },
