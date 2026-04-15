@@ -147,7 +147,10 @@ export async function runStructuredBoardTool(
     });
 
     const insertedDoc = await docs.documents.get({ documentId: printDocId });
-    const normalizationRequests = buildDocumentNormalizationRequests(insertedDoc.data);
+    const normalizationRequests = buildDocumentNormalizationRequests(
+      insertedDoc.data,
+      'https://venmo.com/u/cohesivecanine'
+    );
     if (normalizationRequests.length) {
       await docs.documents.batchUpdate({
         documentId: printDocId,
@@ -195,6 +198,7 @@ export async function runStructuredBoardTool(
 
 type StructuredAnalysis = {
   totalCalendarDays: number;
+  billedCalendarDays: number;
   holidayChargeApplied: boolean;
   baseCharge: number;
   addOnsCharge: number;
@@ -233,7 +237,7 @@ function analyzeStructuredRow(row: DogRow): StructuredAnalysis {
     addOns.push('Training selected, review manually');
   }
 
-  const stayDays = calendarCharges.totalCalendarDays;
+  const stayDays = calendarCharges.billedCalendarDays;
   const weight = Number.parseFloat((row.dogWeight || '').trim());
   const bathIncluded = stayDays >= 10 || optionalText.includes('hike') || bathRequest.includes('included');
   const bathRequested = bathRequest.includes('yes');
@@ -248,6 +252,7 @@ function analyzeStructuredRow(row: DogRow): StructuredAnalysis {
 
   return {
     totalCalendarDays: calendarCharges.totalCalendarDays,
+    billedCalendarDays: calendarCharges.billedCalendarDays,
     holidayChargeApplied: calendarCharges.holidayChargeApplied,
     baseCharge: calendarCharges.totalCharge,
     addOnsCharge,
@@ -266,7 +271,7 @@ function calculateCalendarCharges(row: DogRow) {
   const checkOutHour = parseSheetTimeHour(row.checkOutTime);
 
   if (!checkInDate || !checkOutDate) {
-    return { totalCalendarDays: 0, totalCharge: 0, holidayChargeApplied: false };
+    return { totalCalendarDays: 0, billedCalendarDays: 0, totalCharge: 0, holidayChargeApplied: false };
   }
 
   const days: Date[] = [];
@@ -277,6 +282,7 @@ function calculateCalendarCharges(row: DogRow) {
   }
 
   let totalCharge = 0;
+  let billedCalendarDays = 0;
   let holidayChargeApplied = false;
 
   for (let i = 0; i < days.length; i++) {
@@ -290,6 +296,8 @@ function calculateCalendarCharges(row: DogRow) {
       dayCharge = Math.min(dayCharge, 40);
     }
 
+    billedCalendarDays += dayCharge <= 40 ? 0.5 : 1;
+
     const iso = toIsoDate(current);
     if (US_BANK_HOLIDAYS.includes(iso)) {
       dayCharge *= 2;
@@ -301,6 +309,7 @@ function calculateCalendarCharges(row: DogRow) {
 
   return {
     totalCalendarDays: days.length,
+    billedCalendarDays,
     totalCharge,
     holidayChargeApplied,
   };
@@ -312,29 +321,26 @@ async function buildStructuredSection(row: DogRow, analysis: StructuredAnalysis)
     dogName: row.dogName?.trim() || 'Dog',
     checkIn: joinDateTime(formatSheetDate(row.checkInDate), formatSheetTime(row.checkInTime)) || 'N/A',
     checkOut: joinDateTime(formatSheetDate(row.checkOutDate), formatSheetTime(row.checkOutTime)) || 'N/A',
-    totalCalendarDays: String(analysis.totalCalendarDays),
+    totalCalendarDays: formatBilledDays(analysis.billedCalendarDays),
     addOnsSummary: analysis.addOnsSummary,
     holidayYN: analysis.holidayChargeApplied ? 'y' : 'n',
     totalInvoice: `$${analysis.totalInvoice}`,
   });
 }
 
-function buildDocumentNormalizationRequests(document: docs_v1.Schema$Document): docs_v1.Schema$Request[] {
+function buildDocumentNormalizationRequests(
+  document: docs_v1.Schema$Document,
+  venmoUrl: string
+): docs_v1.Schema$Request[] {
   const requests: docs_v1.Schema$Request[] = [];
   const paragraphs = document.body?.content?.filter((item) => item.paragraph) || [];
   const fullLineBolds = new Set([
     'My address is: 14719 S Oak Point Dr Bluffdale, UT 84065',
-    'Total Calendar Days:',
+    'Total Calendar Days Billed:',
     'Add-ons:',
     'Total Invoice:',
     'Please send full payment 1+ day before check in. :)',
   ]);
-  const prefixBolds = [
-    'Check in:',
-    'Check out:',
-    'Please text me when you\'re on your way!',
-    'Holiday (y/n):',
-  ];
 
   for (const item of paragraphs) {
     const paragraph = item.paragraph;
@@ -362,14 +368,12 @@ function buildDocumentNormalizationRequests(document: docs_v1.Schema$Document): 
 
     if (/ BOARD INFO!$/.test(paragraphText)) {
       requests.push({
-        updateTextStyle: {
+        updateParagraphStyle: {
           range: { startIndex, endIndex: endIndex - 1 },
-          textStyle: {
-            bold: true,
-            weightedFontFamily: { fontFamily: 'Arial' },
-            fontSize: { magnitude: 14, unit: 'PT' },
+          paragraphStyle: {
+            namedStyleType: 'HEADING_2',
           },
-          fields: 'bold,weightedFontFamily,fontSize',
+          fields: 'namedStyleType',
         },
       });
       continue;
@@ -377,34 +381,43 @@ function buildDocumentNormalizationRequests(document: docs_v1.Schema$Document): 
 
     if (fullLineBolds.has(paragraphText)) {
       requests.push({
-        updateTextStyle: {
+        updateParagraphStyle: {
           range: { startIndex, endIndex: endIndex - 1 },
-          textStyle: {
-            bold: true,
+          paragraphStyle: {
+            namedStyleType: 'HEADING_6',
           },
-          fields: 'bold',
+          fields: 'namedStyleType',
         },
       });
       continue;
     }
 
-    for (const prefix of prefixBolds) {
-      if (paragraphText.startsWith(prefix)) {
-        requests.push({
-          updateTextStyle: {
-            range: { startIndex, endIndex: startIndex + prefix.length },
-            textStyle: {
-              bold: true,
+    if (paragraphText.startsWith('Here’s my venmo - ') && paragraphText.includes(venmoUrl)) {
+      const linkStart = startIndex + 'Here’s my venmo - '.length;
+      const linkEnd = linkStart + venmoUrl.length;
+      requests.push({
+        updateTextStyle: {
+          range: { startIndex: linkStart, endIndex: linkEnd },
+          textStyle: {
+            link: { url: venmoUrl },
+            foregroundColor: {
+              color: {
+                rgbColor: { red: 0.067, green: 0.333, blue: 0.8 },
+              },
             },
-            fields: 'bold',
+            underline: true,
           },
-        });
-        break;
-      }
+          fields: 'link,foregroundColor,underline',
+        },
+      });
     }
   }
 
   return requests;
+}
+
+function formatBilledDays(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
 function parseSheetDate(value?: string): Date | null {

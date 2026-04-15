@@ -52,7 +52,7 @@ const DEFAULT_STRUCTURED_SETTINGS: StructuredTemplateSettings = {
     'My address is: 14719 S Oak Point Dr Bluffdale, UT 84065',
     'Please pack - Ecollar, remote, flat collar with ID & food packed per meal/day',
     '',
-    'Total Calendar Days:',
+    'Total Calendar Days Billed:',
     '{{totalCalendarDays}}',
     'Add-ons:',
     '{{addOnsSummary}}',
@@ -63,7 +63,7 @@ const DEFAULT_STRUCTURED_SETTINGS: StructuredTemplateSettings = {
     'Please send full payment 1+ day before check in. :)',
     '10% cancellation fee if cancelled with less than 7 day notice',
     'Let me know if you have any questions!',
-    'Here’s my venmo -',
+    'Here’s my venmo - {{venmoUrl}}',
     '',
   ].join('\n'),
 };
@@ -153,6 +153,7 @@ function getTemplateValues(row: DogRow): Record<string, string> {
     addOnsSummary: 'None',
     holidayYN: 'n',
     totalInvoice: 'N/A',
+    venmoUrl: 'https://venmo.com/u/cohesivecanine',
   };
 }
 
