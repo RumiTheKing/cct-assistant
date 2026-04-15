@@ -54,6 +54,24 @@ export async function runStructuredBoardTool(
     try {
       const analysis = analyzeStructuredRow(row);
 
+      if (analysis.trainingSelected) {
+        warnings.trainingRows.push({
+          rowNumber: row.rowNumber,
+          dogName: row.dogName?.trim() || 'Unknown',
+          detail: analysis.trainingDetail,
+        });
+        await flagWholeRow(sheets, spreadsheetId, preview.title, row.rowNumber, ORANGE_RGB);
+        await flagNamedCell(
+          sheets,
+          spreadsheetId,
+          preview.title,
+          row.rowNumber,
+          COLUMN_NAMES.optionalAdventures,
+          RED_RGB,
+          WHITE_RGB
+        );
+      }
+
       if (analysis.multiDogDetected) {
         warnings.multiDogRows.push({
           rowNumber: row.rowNumber,
@@ -71,33 +89,6 @@ export async function runStructuredBoardTool(
         );
         skipped.push({ rowNumber: row.rowNumber, reason: 'Multiple dogs detected in one row' });
         continue;
-      }
-
-      if (analysis.trainingSelected) {
-        warnings.trainingRows.push({
-          rowNumber: row.rowNumber,
-          dogName: row.dogName?.trim() || 'Unknown',
-          detail: analysis.trainingDetail,
-        });
-        await flagWholeRow(sheets, spreadsheetId, preview.title, row.rowNumber, ORANGE_RGB);
-        await flagNamedCell(
-          sheets,
-          spreadsheetId,
-          preview.title,
-          row.rowNumber,
-          COLUMN_NAMES.dogName,
-          RED_RGB,
-          WHITE_RGB
-        );
-        await flagNamedCell(
-          sheets,
-          spreadsheetId,
-          preview.title,
-          row.rowNumber,
-          COLUMN_NAMES.optionalAdventures,
-          RED_RGB,
-          WHITE_RGB
-        );
       }
 
       const sectionText = buildStructuredSection(row, analysis);
