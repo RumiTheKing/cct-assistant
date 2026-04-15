@@ -6,6 +6,7 @@ import { getGoogleClients } from './google';
 import { extractSpreadsheetId, loadRows } from './sheets';
 import { runDraftAndPrint } from './run';
 import { runStructuredBoardTool } from './structured';
+import { loadStructuredPreview } from './structured-preview';
 import {
   clearSavedTokens,
   exchangeCodeForTokens,
@@ -77,13 +78,7 @@ app.post('/api/structured/preview', async (req, res) => {
     const { sheetUrl } = req.body;
     const spreadsheetId = extractSpreadsheetId(sheetUrl);
     const { sheets } = await getGoogleClients();
-    const preview = await loadRows(sheets, spreadsheetId, {
-      requireEmail: false,
-      trackingColumns: {
-        status: 'Structured Status',
-        docUrl: 'Structured Doc URL',
-      },
-    });
+    const preview = await loadStructuredPreview(sheets, spreadsheetId);
     res.json(preview);
   } catch (error) {
     res.status(500).json({ error: formatApiError(error) });
