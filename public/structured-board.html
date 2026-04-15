@@ -81,7 +81,7 @@
           ${multiDogRows.length ? `
             <div class="result-card">
               <strong>${multiDogRows.length} row(s) with multiple dogs detected</strong>
-              <div class="soft">These rows were skipped and the dog-name cell was marked red with white text.</div>
+              <div class="soft">These rows will be skipped and the dog-name cell will be marked red with white text when you create the document.</div>
             </div>
             <h3 class="section-title">Rows with multiple dogs detected</h3>
             <ul>${multiDogRows.map((item) => `<li>Row ${item.rowNumber}: ${escapeHtml(item.dogName)} (${escapeHtml(item.reason)})</li>`).join('')}</ul>
@@ -89,7 +89,7 @@
           ${trainingRows.length ? `
             <div class="result-card">
               <strong>${trainingRows.length} row(s) with training selected</strong>
-              <div class="soft">These rows were highlighted for manual review.</div>
+              <div class="soft">These rows will be highlighted for manual review when you create the document.</div>
             </div>
             <h3 class="section-title">Rows with training selected</h3>
             <ul>${trainingRows.map((item) => `<li>Row ${item.rowNumber}: ${escapeHtml(item.dogName)} (${escapeHtml(item.detail)})</li>`).join('')}</ul>
