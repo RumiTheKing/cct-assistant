@@ -38,12 +38,13 @@ export async function runStructuredBoardTool(
   ]);
 
   const now = new Date();
-  const docTitle = `TEXT DOCUMENT - ${now.toISOString().replace(/[:T]/g, '-').slice(0, 16)}`;
+  const docTitle = `SB TEXT DOCUMENT - ${now.toISOString().replace(/[:T]/g, '-').slice(0, 16)}`;
   const completedStatus = `Text Document Created ${now.toISOString().slice(0, 10)}`;
 
   const processed: RunResult['processed'] = [];
   const skipped = [...preview.skipped];
   const sections: string[] = [];
+  const sectionTexts: string[] = [];
   const warnings = {
     multiDogRows: [...(preview.warnings?.multiDogRows || [])],
     trainingRows: [...(preview.warnings?.trainingRows || [])],
@@ -99,7 +100,9 @@ export async function runStructuredBoardTool(
         );
       }
 
-      sections.push(buildStructuredSection(row, analysis));
+      const sectionText = buildStructuredSection(row, analysis);
+      sections.push(sectionText);
+      sectionTexts.push(sectionText);
       processed.push({
         rowNumber: row.rowNumber,
         dogName: row.dogName || 'Unknown',
@@ -124,20 +127,35 @@ export async function runStructuredBoardTool(
     printDocId = doc.data.documentId || undefined;
     if (!printDocId) throw new Error('Failed to create text document');
 
-    const fullText = sections.join('\n--------------------\n\n');
+    const requests: docs_v1.Schema$Request[] = [];
+    let fullText = '';
+
+    for (let i = 0; i < sectionTexts.length; i++) {
+      const sectionText = sectionTexts[i];
+      requests.push({
+        insertText: {
+          endOfSegmentLocation: {},
+          text: sectionText,
+        },
+      });
+      fullText += sectionText;
+
+      if (i < sectionTexts.length - 1) {
+        requests.push({
+          insertPageBreak: {
+            endOfSegmentLocation: {},
+          },
+        });
+        fullText += '\n';
+      }
+    }
+
+    requests.push(...buildTextDocumentStyleRequests(fullText));
 
     await docs.documents.batchUpdate({
       documentId: printDocId,
       requestBody: {
-        requests: [
-          {
-            insertText: {
-              endOfSegmentLocation: {},
-              text: fullText,
-            },
-          },
-          ...buildTextDocumentStyleRequests(fullText),
-        ],
+        requests,
       },
     });
 
