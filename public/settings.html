@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cohesive Canine Assistant Settings</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 920px; margin: 40px auto; padding: 0 16px; }
+      input, button, textarea { font: inherit; }
+      textarea { width: 100%; padding: 10px; margin: 8px 0 12px; box-sizing: border-box; min-height: 120px; }
+      button { padding: 10px 14px; margin-right: 8px; cursor: pointer; }
+      .card { border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin: 16px 0; }
+      .muted { color: #666; }
+      .template-grid { display: grid; gap: 12px; }
+      .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
+      .pill { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #f1f1f1; margin: 4px 6px 0 0; font-size: 0.9rem; }
+      .nav { margin-bottom: 20px; }
+      a.button-link { display: inline-block; padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px; text-decoration: none; color: inherit; }
+      code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <div class="nav">
+      <a class="button-link" href="/">Home</a>
+      <a class="button-link" href="/board-and-train.html">Board and Train Tool</a>
+    </div>
+
+    <h1>Settings</h1>
+    <p class="muted">Edit your draft templates here. HTML is supported in the body template.</p>
+
+    <div class="card">
+      <h2>Template Editor</h2>
+      <p class="muted">Use placeholders like <code>{{dogName}}</code>, <code>{{checkIn}}</code>, <code>{{checkOut}}</code>, <code>{{recapMinutes}}</code>, <code>{{dogSummary}}</code>, <code>{{issues}}</code>, and <code>{{goals}}</code>.</p>
+      <div class="template-grid">
+        <div>
+          <label for="subjectTemplate">Email subject template</label>
+          <textarea id="subjectTemplate" style="min-height: 70px"></textarea>
+        </div>
+        <div>
+          <label for="bodyTemplate">Email body template (HTML supported)</label>
+          <textarea id="bodyTemplate"></textarea>
+        </div>
+        <div class="button-row">
+          <button id="saveTemplateBtn">Save Templates</button>
+          <button id="resetTemplateBtn">Reset to Default</button>
+        </div>
+        <div id="templateStatus" class="muted">Loading templates...</div>
+      </div>
+    </div>
+
+    <script>
+      const subjectTemplate = document.getElementById('subjectTemplate');
+      const bodyTemplate = document.getElementById('bodyTemplate');
+      const saveTemplateBtn = document.getElementById('saveTemplateBtn');
+      const resetTemplateBtn = document.getElementById('resetTemplateBtn');
+      const templateStatus = document.getElementById('templateStatus');
+
+      async function post(url, body) {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Request failed');
+        return data;
+      }
+
+      async function loadTemplateSettings() {
+        try {
+          templateStatus.textContent = 'Loading templates...';
+          const res = await fetch('/api/template-settings');
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Failed to load templates');
+          subjectTemplate.value = data.settings.subjectTemplate || '';
+          bodyTemplate.value = data.settings.bodyTemplate || '';
+          templateStatus.innerHTML = `Templates loaded. <span class="pill">{{dogName}}</span><span class="pill">{{checkIn}}</span><span class="pill">{{checkOut}}</span><span class="pill">{{recapMinutes}}</span><span class="pill">{{dogSummary}}</span><span class="pill">{{issues}}</span><span class="pill">{{goals}}</span>`;
+        } catch (err) {
+          templateStatus.textContent = err.message;
+        }
+      }
+
+      saveTemplateBtn.addEventListener('click', async () => {
+        try {
+          templateStatus.textContent = 'Saving templates...';
+          await post('/api/template-settings', {
+            subjectTemplate: subjectTemplate.value,
+            bodyTemplate: bodyTemplate.value,
+          });
+          templateStatus.textContent = 'Templates saved.';
+        } catch (err) {
+          templateStatus.textContent = err.message;
+        }
+      });
+
+      resetTemplateBtn.addEventListener('click', async () => {
+        const confirmed = window.confirm('Reset both templates back to the default version?');
+        if (!confirmed) return;
+
+        try {
+          templateStatus.textContent = 'Resetting templates...';
+          const data = await post('/api/template-settings/reset', {});
+          subjectTemplate.value = data.settings.subjectTemplate || '';
+          bodyTemplate.value = data.settings.bodyTemplate || '';
+          templateStatus.textContent = 'Templates reset to default.';
+        } catch (err) {
+          templateStatus.textContent = err.message;
+        }
+      });
+
+      loadTemplateSettings();
+    </script>
+  </body>
+</html>

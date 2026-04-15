@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cohesive Canine Assistant</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 980px; margin: 40px auto; padding: 0 16px; background: #fcfcfc; color: #1f2328; }
+      button { padding: 10px 14px; cursor: pointer; border-radius: 10px; border: 1px solid #d0d7de; background: #fff; font: inherit; }
+      button:disabled { opacity: 0.6; cursor: not-allowed; }
+      .danger-button { border-color: #ef4444; color: #b91c1c; background: #fff; }
+      .card { border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; margin: 16px 0; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+      .muted { color: #667085; }
+      .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+      .topbar-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+      .topbar-button-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+      .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; font-size: 0.78rem; border: 1px solid #d0d7de; background: #fff; }
+      .status-dot { width: 8px; height: 8px; border-radius: 999px; background: #98a2b3; }
+      .status-connected .status-dot { background: #16a34a; }
+      .status-disconnected .status-dot { background: #dc2626; }
+      .tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 18px; }
+      .tool-card { border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px; background: #fbfdff; }
+      .tool-card h2 { margin-top: 0; margin-bottom: 8px; }
+      .tool-card p { margin-bottom: 14px; }
+      a.button-link { display: inline-block; padding: 10px 14px; border: 1px solid #d0d7de; border-radius: 10px; text-decoration: none; color: inherit; background: #fff; }
+      .coming-soon { font-size: 0.85rem; color: #666; margin-top: 8px; }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <div>
+        <h1 style="margin-bottom: 6px">Cohesive Canine Assistant</h1>
+        <p class="muted" style="margin-top: 0">A small suite of tools for your dog-training workflows.</p>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-button-row">
+          <button id="connectBtn">Connect Google</button>
+          <button id="disconnectBtn" class="danger-button" style="display:none">Disconnect Google</button>
+        </div>
+        <div id="connectionStatus" class="status-pill status-disconnected">
+          <span class="status-dot"></span>
+          <span>Checking Google connection...</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top: 0">Tools</h2>
+      <p class="muted">Choose a workflow below. Google connection is shared across the whole app.</p>
+      <div class="tool-grid">
+        <div class="tool-card">
+          <h2>Board and Train Tool</h2>
+          <p>Creates Gmail drafts, makes one PRINT doc per run, and writes status tracking back to the sheet.</p>
+          <a class="button-link" href="/board-and-train.html">Open Board and Train Tool</a>
+        </div>
+        <div class="tool-card">
+          <h2>Structured Board Tool</h2>
+          <p>Creates structured print docs from the same sheet with its own duplicate protection and tracking columns.</p>
+          <a class="button-link" href="/structured-board.html">Open Structured Board Tool</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const connectBtn = document.getElementById('connectBtn');
+      const disconnectBtn = document.getElementById('disconnectBtn');
+      const connectionStatus = document.getElementById('connectionStatus');
+
+      async function post(url, body) {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Request failed');
+        return data;
+      }
+
+      async function refreshHealth() {
+        try {
+          const res = await fetch('/api/health');
+          const data = await res.json();
+          if (data.connected) {
+            connectionStatus.className = 'status-pill status-connected';
+            connectionStatus.innerHTML = '<span class="status-dot"></span><span>Google connected</span>';
+            connectBtn.style.display = 'none';
+            disconnectBtn.style.display = '';
+          } else {
+            connectionStatus.className = 'status-pill status-disconnected';
+            connectionStatus.innerHTML = '<span class="status-dot"></span><span>Google not connected</span>';
+            connectBtn.style.display = '';
+            disconnectBtn.style.display = 'none';
+          }
+        } catch {
+          connectionStatus.className = 'status-pill status-disconnected';
+          connectionStatus.innerHTML = '<span class="status-dot"></span><span>Unable to check connection</span>';
+          connectBtn.style.display = '';
+          disconnectBtn.style.display = 'none';
+        }
+      }
+
+      connectBtn.addEventListener('click', () => {
+        window.location.href = '/auth/google/start';
+      });
+
+      disconnectBtn.addEventListener('click', async () => {
+        const confirmed = window.confirm('Disconnect Google for this app on this Mac?');
+        if (!confirmed) return;
+
+        try {
+          connectBtn.disabled = true;
+          disconnectBtn.disabled = true;
+          await post('/api/auth/disconnect', {});
+          await refreshHealth();
+        } catch (err) {
+          window.alert(err.message || 'Disconnect failed');
+        } finally {
+          connectBtn.disabled = false;
+          disconnectBtn.disabled = false;
+        }
+      });
+
+      refreshHealth();
+    </script>
+  </body>
+</html>
