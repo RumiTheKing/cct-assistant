@@ -18,6 +18,7 @@ export async function loadStructuredPreview(
     multiDogRows: [] as Array<{ rowNumber: number; dogName: string; reason: string }>,
     trainingRows: [] as Array<{ rowNumber: number; dogName: string; detail: string }>,
   };
+  const previewSkipped = [...preview.skipped];
 
   for (const row of preview.rows) {
     const dogName = row.dogName?.trim() || '';
@@ -30,6 +31,10 @@ export async function loadStructuredPreview(
       warnings.multiDogRows.push({
         rowNumber: row.rowNumber,
         dogName: row.dogName?.trim() || 'Unknown',
+        reason: 'Multiple dogs detected in one row',
+      });
+      previewSkipped.push({
+        rowNumber: row.rowNumber,
         reason: 'Multiple dogs detected in one row',
       });
     }
@@ -45,6 +50,7 @@ export async function loadStructuredPreview(
 
   return {
     ...preview,
+    skipped: previewSkipped,
     warnings,
   };
 }
