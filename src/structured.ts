@@ -70,7 +70,8 @@ export async function runStructuredBoardTool(
           dogName: row.dogName?.trim() || 'Unknown',
           detail: analysis.trainingDetail,
         });
-        await flagDogNameCell(sheets, spreadsheetId, preview.title, row.rowNumber, ORANGE_RGB);
+        await flagWholeRow(sheets, spreadsheetId, preview.title, row.rowNumber, ORANGE_RGB);
+        await flagDogNameCell(sheets, spreadsheetId, preview.title, row.rowNumber, RED_RGB, WHITE_RGB);
       }
 
       sections.push(buildStructuredSection(row, analysis));
@@ -440,6 +441,45 @@ async function writeStructuredTrackingValues(
       requestBody: { requests },
     });
   }
+}
+
+async function flagWholeRow(
+  sheets: sheets_v4.Sheets,
+  spreadsheetId: string,
+  sheetTitle: string,
+  rowNumber: number,
+  backgroundColor: { red: number; green: number; blue: number }
+) {
+  const meta = await sheets.spreadsheets.get({ spreadsheetId });
+  const sheet = meta.data.sheets?.find((s) => s.properties?.title === sheetTitle);
+  const sheetId = sheet?.properties?.sheetId;
+  const columnCount = sheet?.properties?.gridProperties?.columnCount || 0;
+  if (sheetId === undefined || columnCount <= 0) return;
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: [
+        {
+          repeatCell: {
+            range: {
+              sheetId,
+              startRowIndex: rowNumber - 1,
+              endRowIndex: rowNumber,
+              startColumnIndex: 0,
+              endColumnIndex: columnCount,
+            },
+            cell: {
+              userEnteredFormat: {
+                backgroundColor,
+              },
+            },
+            fields: 'userEnteredFormat.backgroundColor',
+          },
+        },
+      ],
+    },
+  });
 }
 
 async function flagDogNameCell(

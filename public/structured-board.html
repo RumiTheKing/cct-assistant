@@ -79,10 +79,18 @@
         const trainingRows = warnings.trainingRows || [];
         return `
           ${multiDogRows.length ? `
+            <div class="result-card">
+              <strong>${multiDogRows.length} row(s) with multiple dogs detected</strong>
+              <div class="soft">These rows were skipped and the dog-name cell was marked red with white text.</div>
+            </div>
             <h3 class="section-title">Rows with multiple dogs detected</h3>
             <ul>${multiDogRows.map((item) => `<li>Row ${item.rowNumber}: ${escapeHtml(item.dogName)} (${escapeHtml(item.reason)})</li>`).join('')}</ul>
           ` : ''}
           ${trainingRows.length ? `
+            <div class="result-card">
+              <strong>${trainingRows.length} row(s) with training selected</strong>
+              <div class="soft">These rows were highlighted for manual review.</div>
+            </div>
             <h3 class="section-title">Rows with training selected</h3>
             <ul>${trainingRows.map((item) => `<li>Row ${item.rowNumber}: ${escapeHtml(item.dogName)} (${escapeHtml(item.detail)})</li>`).join('')}</ul>
           ` : ''}
@@ -168,6 +176,12 @@
           results.textContent = 'Loading preview...';
           const data = await post('/api/structured/preview', { sheetUrl: sheetUrl.value });
           renderPreview(data);
+          if ((data.warnings?.multiDogRows || []).length) {
+            window.alert(`${data.warnings.multiDogRows.length} row(s) with multiple dogs were detected and will be skipped.`);
+          }
+          if ((data.warnings?.trainingRows || []).length) {
+            window.alert(`${data.warnings.trainingRows.length} row(s) with training selected were detected for manual review.`);
+          }
           actionNote.textContent = 'Structured preview loaded.';
         } catch (err) {
           results.innerHTML = `<pre>${err.message}</pre>`;
@@ -186,6 +200,12 @@
           results.textContent = 'Running...';
           const data = await post('/api/structured/run', { sheetUrl: sheetUrl.value });
           renderRun(data);
+          if ((data.warnings?.multiDogRows || []).length) {
+            window.alert(`${data.warnings.multiDogRows.length} row(s) with multiple dogs were detected and skipped.`);
+          }
+          if ((data.warnings?.trainingRows || []).length) {
+            window.alert(`${data.warnings.trainingRows.length} row(s) with training selected were flagged for manual review.`);
+          }
           actionNote.textContent = 'Structured run complete.';
         } catch (err) {
           results.innerHTML = `<pre>${err.message}</pre>`;
