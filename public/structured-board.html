@@ -184,7 +184,8 @@
           }
           actionNote.textContent = 'Structured preview loaded.';
         } catch (err) {
-          results.innerHTML = `<pre>${err.message}</pre>`;
+          const message = String(err.message || 'Structured preview failed.');
+          results.innerHTML = `<div class="result-card"><strong>Preview failed.</strong><div class="soft">${escapeHtml(message)}</div></div>`;
           actionNote.textContent = 'Structured preview failed.';
         } finally {
           setBusy(false);
@@ -208,7 +209,8 @@
           }
           actionNote.textContent = 'Structured run complete.';
         } catch (err) {
-          results.innerHTML = `<pre>${err.message}</pre>`;
+          const message = String(err.message || 'Structured run failed.');
+          results.innerHTML = `<div class="result-card"><strong>Run failed.</strong><div class="soft">${escapeHtml(message)}</div></div>`;
           actionNote.textContent = 'Structured run failed.';
         } finally {
           setBusy(false);
