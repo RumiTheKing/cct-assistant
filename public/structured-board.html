@@ -205,7 +205,7 @@
             window.alert(`${data.warnings.multiDogRows.length} row(s) with multiple dogs were detected and skipped.`);
           }
           if ((data.warnings?.trainingRows || []).length) {
-            window.alert(`${data.warnings.trainingRows.length} row(s) with training selected were detected and will be marked for manual review.`);
+            window.alert(`${data.warnings.trainingRows.length} row(s) with training selected were flagged for manual review.`);
           }
           actionNote.textContent = 'Structured run complete.';
         } catch (err) {
