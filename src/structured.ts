@@ -1,6 +1,7 @@
 import { docs_v1, sheets_v4 } from 'googleapis';
 import { BLACK_RGB, COLUMN_NAMES, ORANGE_RGB, RED_RGB, YELLOW_RGB } from './config';
 import { columnToLetter, ensureCustomTrackingColumns, loadRows } from './sheets';
+import { loadStructuredTemplateSettings, renderTemplate } from './template-settings';
 import { DogRow, RunResult } from './types';
 
 const STRUCTURED_STATUS_COLUMN = 'Structured Status';
@@ -91,7 +92,7 @@ export async function runStructuredBoardTool(
         continue;
       }
 
-      const sectionText = buildStructuredSection(row, analysis);
+      const sectionText = await buildStructuredSection(row, analysis);
       sections.push(sectionText);
       sectionTexts.push(sectionText);
       processed.push({
@@ -305,35 +306,17 @@ function calculateCalendarCharges(row: DogRow) {
   };
 }
 
-function buildStructuredSection(row: DogRow, analysis: StructuredAnalysis): string {
-  const dogName = row.dogName?.trim() || 'Dog';
-  return [
-    `${dogName} BOARD INFO!`,
-    '',
-    `Check in: ${joinDateTime(formatSheetDate(row.checkInDate), formatSheetTime(row.checkInTime)) || 'N/A'}`,
-    `Check out: ${joinDateTime(formatSheetDate(row.checkOutDate), formatSheetTime(row.checkOutTime)) || 'N/A'}`,
-    '',
-    "Please text me when you're on your way! For safety, all dogs need to be secured before you arrive, so if you're running early or late, please let me know. Exact ETAs are super helpful! (Example: \"Arriving at 8:04pm!\")",
-    '',
-    'We treat all check-in/check-out times like appointments, so please be on time. If you\'re running late, we require at least 30 minutes’ notice, otherwise, a $25 fee will apply.',
-    '',
-    'My address is: 14719 S Oak Point Dr Bluffdale, UT 84065',
-    'Please pack - Ecollar, remote, flat collar with ID & food packed per meal/day',
-    '',
-    'Total Calendar Days:',
-    `${analysis.totalCalendarDays}`,
-    'Add-ons:',
-    analysis.addOnsSummary,
-    `Holiday (y/n): ${analysis.holidayChargeApplied ? 'y' : 'n'}`,
-    'Total Invoice:',
-    `$${analysis.totalInvoice}`,
-    '',
-    'Please send full payment 1+ day before check in. :)',
-    '10% cancellation fee if cancelled with less than 7 day notice',
-    'Let me know if you have any questions!',
-    'Here’s my venmo -',
-    '',
-  ].join('\n');
+async function buildStructuredSection(row: DogRow, analysis: StructuredAnalysis): Promise<string> {
+  const settings = await loadStructuredTemplateSettings();
+  return renderTemplate(settings.bodyTemplate, row, {
+    dogName: row.dogName?.trim() || 'Dog',
+    checkIn: joinDateTime(formatSheetDate(row.checkInDate), formatSheetTime(row.checkInTime)) || 'N/A',
+    checkOut: joinDateTime(formatSheetDate(row.checkOutDate), formatSheetTime(row.checkOutTime)) || 'N/A',
+    totalCalendarDays: String(analysis.totalCalendarDays),
+    addOnsSummary: analysis.addOnsSummary,
+    holidayYN: analysis.holidayChargeApplied ? 'y' : 'n',
+    totalInvoice: `$${analysis.totalInvoice}`,
+  });
 }
 
 function buildDocumentNormalizationRequests(document: docs_v1.Schema$Document): docs_v1.Schema$Request[] {

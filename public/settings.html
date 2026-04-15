@@ -23,13 +23,14 @@
     <div class="nav">
       <a class="button-link" href="/">Home</a>
       <a class="button-link" href="/board-and-train.html">Board and Train Tool</a>
+      <a class="button-link" href="/structured-board.html">Structured Board Tool</a>
     </div>
 
     <h1>Settings</h1>
-    <p class="muted">Edit your draft templates here. HTML is supported in the body template.</p>
+    <p class="muted">Edit your tool templates here.</p>
 
     <div class="card">
-      <h2>Template Editor</h2>
+      <h2>Board and Train Email Template Editor</h2>
       <p class="muted">Use placeholders like <code>{{dogName}}</code>, <code>{{checkIn}}</code>, <code>{{checkOut}}</code>, <code>{{recapMinutes}}</code>, <code>{{dogSummary}}</code>, <code>{{issues}}</code>, and <code>{{goals}}</code>.</p>
       <div class="template-grid">
         <div>
@@ -48,12 +49,33 @@
       </div>
     </div>
 
+    <div class="card">
+      <h2>SB Text Document Template Editor</h2>
+      <p class="muted">Use placeholders like <code>{{dogName}}</code>, <code>{{checkIn}}</code>, <code>{{checkOut}}</code>, <code>{{totalCalendarDays}}</code>, <code>{{addOnsSummary}}</code>, <code>{{holidayYN}}</code>, and <code>{{totalInvoice}}</code>.</p>
+      <div class="template-grid">
+        <div>
+          <label for="structuredBodyTemplate">SB Text Document template</label>
+          <textarea id="structuredBodyTemplate" style="min-height: 320px"></textarea>
+        </div>
+        <div class="button-row">
+          <button id="saveStructuredTemplateBtn">Save SB Template</button>
+          <button id="resetStructuredTemplateBtn">Reset SB Template</button>
+        </div>
+        <div id="structuredTemplateStatus" class="muted">Loading SB template...</div>
+      </div>
+    </div>
+
     <script>
       const subjectTemplate = document.getElementById('subjectTemplate');
       const bodyTemplate = document.getElementById('bodyTemplate');
       const saveTemplateBtn = document.getElementById('saveTemplateBtn');
       const resetTemplateBtn = document.getElementById('resetTemplateBtn');
       const templateStatus = document.getElementById('templateStatus');
+
+      const structuredBodyTemplate = document.getElementById('structuredBodyTemplate');
+      const saveStructuredTemplateBtn = document.getElementById('saveStructuredTemplateBtn');
+      const resetStructuredTemplateBtn = document.getElementById('resetStructuredTemplateBtn');
+      const structuredTemplateStatus = document.getElementById('structuredTemplateStatus');
 
       async function post(url, body) {
         const res = await fetch(url, {
@@ -77,6 +99,19 @@
           templateStatus.innerHTML = `Templates loaded. <span class="pill">{{dogName}}</span><span class="pill">{{checkIn}}</span><span class="pill">{{checkOut}}</span><span class="pill">{{recapMinutes}}</span><span class="pill">{{dogSummary}}</span><span class="pill">{{issues}}</span><span class="pill">{{goals}}</span>`;
         } catch (err) {
           templateStatus.textContent = err.message;
+        }
+      }
+
+      async function loadStructuredTemplateSettings() {
+        try {
+          structuredTemplateStatus.textContent = 'Loading SB template...';
+          const res = await fetch('/api/structured-template-settings');
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Failed to load SB template');
+          structuredBodyTemplate.value = data.settings.bodyTemplate || '';
+          structuredTemplateStatus.innerHTML = `SB template loaded. <span class="pill">{{dogName}}</span><span class="pill">{{checkIn}}</span><span class="pill">{{checkOut}}</span><span class="pill">{{totalCalendarDays}}</span><span class="pill">{{addOnsSummary}}</span><span class="pill">{{holidayYN}}</span><span class="pill">{{totalInvoice}}</span>`;
+        } catch (err) {
+          structuredTemplateStatus.textContent = err.message;
         }
       }
 
@@ -108,7 +143,34 @@
         }
       });
 
+      saveStructuredTemplateBtn.addEventListener('click', async () => {
+        try {
+          structuredTemplateStatus.textContent = 'Saving SB template...';
+          await post('/api/structured-template-settings', {
+            bodyTemplate: structuredBodyTemplate.value,
+          });
+          structuredTemplateStatus.textContent = 'SB template saved.';
+        } catch (err) {
+          structuredTemplateStatus.textContent = err.message;
+        }
+      });
+
+      resetStructuredTemplateBtn.addEventListener('click', async () => {
+        const confirmed = window.confirm('Reset the SB Text Document template back to the default version?');
+        if (!confirmed) return;
+
+        try {
+          structuredTemplateStatus.textContent = 'Resetting SB template...';
+          const data = await post('/api/structured-template-settings/reset', {});
+          structuredBodyTemplate.value = data.settings.bodyTemplate || '';
+          structuredTemplateStatus.textContent = 'SB template reset to default.';
+        } catch (err) {
+          structuredTemplateStatus.textContent = err.message;
+        }
+      });
+
       loadTemplateSettings();
+      loadStructuredTemplateSettings();
     </script>
   </body>
 </html>

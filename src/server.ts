@@ -15,8 +15,11 @@ import {
   hasSavedTokens,
 } from './auth';
 import {
+  getDefaultStructuredTemplateSettings,
   getDefaultTemplateSettings,
+  loadStructuredTemplateSettings,
   loadTemplateSettings,
+  saveStructuredTemplateSettings,
   saveTemplateSettings,
 } from './template-settings';
 
@@ -121,6 +124,35 @@ app.post('/api/template-settings', async (req, res) => {
 app.post('/api/template-settings/reset', async (_req, res) => {
   try {
     const settings = await saveTemplateSettings(getDefaultTemplateSettings());
+    res.json({ ok: true, settings });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+app.get('/api/structured-template-settings', async (_req, res) => {
+  try {
+    res.json({ settings: await loadStructuredTemplateSettings(), defaults: getDefaultStructuredTemplateSettings() });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+app.post('/api/structured-template-settings', async (req, res) => {
+  try {
+    const { bodyTemplate } = req.body || {};
+    const settings = await saveStructuredTemplateSettings({
+      bodyTemplate: String(bodyTemplate || ''),
+    });
+    res.json({ ok: true, settings });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+app.post('/api/structured-template-settings/reset', async (_req, res) => {
+  try {
+    const settings = await saveStructuredTemplateSettings(getDefaultStructuredTemplateSettings());
     res.json({ ok: true, settings });
   } catch (error) {
     res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });

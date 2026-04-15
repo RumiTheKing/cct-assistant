@@ -7,8 +7,13 @@ export type TemplateSettings = {
   bodyTemplate: string;
 };
 
+export type StructuredTemplateSettings = {
+  bodyTemplate: string;
+};
+
 const SETTINGS_DIR = path.join(process.cwd(), 'state');
 const SETTINGS_PATH = path.join(SETTINGS_DIR, 'template-settings.json');
+const STRUCTURED_SETTINGS_PATH = path.join(SETTINGS_DIR, 'structured-template-settings.json');
 
 const DEFAULT_SETTINGS: TemplateSettings = {
   subjectTemplate: '{{dogName}} Board and Train Info',
@@ -31,6 +36,36 @@ const DEFAULT_SETTINGS: TemplateSettings = {
     '<p>Goals - {{goals}}</p>',
     '<p>Let me know if you have any questions at all! Thanks!</p>',
   ].join(''),
+};
+
+const DEFAULT_STRUCTURED_SETTINGS: StructuredTemplateSettings = {
+  bodyTemplate: [
+    '{{dogName}} BOARD INFO!',
+    '',
+    'Check in: {{checkIn}}',
+    'Check out: {{checkOut}}',
+    '',
+    'Please text me when you\'re on your way! For safety, all dogs need to be secured before you arrive, so if you\'re running early or late, please let me know. Exact ETAs are super helpful! (Example: "Arriving at 8:04pm!")',
+    '',
+    'We treat all check-in/check-out times like appointments, so please be on time. If you\'re running late, we require at least 30 minutes’ notice, otherwise, a $25 fee will apply.',
+    '',
+    'My address is: 14719 S Oak Point Dr Bluffdale, UT 84065',
+    'Please pack - Ecollar, remote, flat collar with ID & food packed per meal/day',
+    '',
+    'Total Calendar Days:',
+    '{{totalCalendarDays}}',
+    'Add-ons:',
+    '{{addOnsSummary}}',
+    'Holiday (y/n): {{holidayYN}}',
+    'Total Invoice:',
+    '{{totalInvoice}}',
+    '',
+    'Please send full payment 1+ day before check in. :)',
+    '10% cancellation fee if cancelled with less than 7 day notice',
+    'Let me know if you have any questions!',
+    'Here’s my venmo -',
+    '',
+  ].join('\n'),
 };
 
 export async function loadTemplateSettings(): Promise<TemplateSettings> {
@@ -61,8 +96,36 @@ export function getDefaultTemplateSettings(): TemplateSettings {
   return { ...DEFAULT_SETTINGS };
 }
 
-export function renderTemplate(template: string, row: DogRow): string {
-  const values = getTemplateValues(row);
+export async function loadStructuredTemplateSettings(): Promise<StructuredTemplateSettings> {
+  try {
+    const raw = await fs.readFile(STRUCTURED_SETTINGS_PATH, 'utf8');
+    const parsed = JSON.parse(raw) as Partial<StructuredTemplateSettings>;
+    return {
+      bodyTemplate: parsed.bodyTemplate || DEFAULT_STRUCTURED_SETTINGS.bodyTemplate,
+    };
+  } catch {
+    return DEFAULT_STRUCTURED_SETTINGS;
+  }
+}
+
+export async function saveStructuredTemplateSettings(
+  settings: StructuredTemplateSettings
+): Promise<StructuredTemplateSettings> {
+  const next: StructuredTemplateSettings = {
+    bodyTemplate: settings.bodyTemplate || DEFAULT_STRUCTURED_SETTINGS.bodyTemplate,
+  };
+
+  await fs.mkdir(SETTINGS_DIR, { recursive: true });
+  await fs.writeFile(STRUCTURED_SETTINGS_PATH, JSON.stringify(next, null, 2));
+  return next;
+}
+
+export function getDefaultStructuredTemplateSettings(): StructuredTemplateSettings {
+  return { ...DEFAULT_STRUCTURED_SETTINGS };
+}
+
+export function renderTemplate(template: string, row: DogRow, extraValues: Record<string, string> = {}): string {
+  const values = { ...getTemplateValues(row), ...extraValues };
   return template.replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (_match, key) => values[key] ?? '');
 }
 
@@ -86,6 +149,10 @@ function getTemplateValues(row: DogRow): Record<string, string> {
     dogBreed: escapeHtml(row.dogBreed?.trim() || 'N/A'),
     issues: escapeHtml(row.issues?.trim() || 'N/A'),
     goals: escapeHtml(row.goals?.trim() || 'N/A'),
+    totalCalendarDays: 'N/A',
+    addOnsSummary: 'None',
+    holidayYN: 'n',
+    totalInvoice: 'N/A',
   };
 }
 
