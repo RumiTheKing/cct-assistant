@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
+import { GaxiosError } from 'gaxios';
 import { getGoogleClients } from './google';
 import { extractSpreadsheetId, loadRows } from './sheets';
 import { runDraftAndPrint } from './run';
@@ -55,7 +56,7 @@ app.post('/api/preview', async (req, res) => {
     const preview = await loadRows(sheets, spreadsheetId);
     res.json(preview);
   } catch (error) {
-    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    res.status(500).json({ error: formatApiError(error) });
   }
 });
 
@@ -67,7 +68,7 @@ app.post('/api/run', async (req, res) => {
     const result = await runDraftAndPrint(sheets, gmail, docs, drive, spreadsheetId);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    res.status(500).json({ error: formatApiError(error) });
   }
 });
 
@@ -85,7 +86,7 @@ app.post('/api/structured/preview', async (req, res) => {
     });
     res.json(preview);
   } catch (error) {
-    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    res.status(500).json({ error: formatApiError(error) });
   }
 });
 
@@ -97,7 +98,7 @@ app.post('/api/structured/run', async (req, res) => {
     const result = await runStructuredBoardTool(sheets, docs, spreadsheetId);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    res.status(500).json({ error: formatApiError(error) });
   }
 });
 
@@ -153,3 +154,23 @@ app.use((_req, res) => {
 app.listen(port, () => {
   console.log(`Cohesive Canine Assistant listening on http://localhost:${port}`);
 });
+
+function formatApiError(error: unknown): string {
+  if (error instanceof GaxiosError) {
+    const message = error.response?.data && typeof error.response.data === 'object'
+      ? String((error.response.data as { error?: { message?: string } }).error?.message || error.message)
+      : error.message;
+
+    if (message.includes('This operation is not supported for this document')) {
+      return 'That link appears valid, but Google is not treating it like a normal Sheet tab for this action. Please make sure the link points to a standard Google Sheet tab, or send it to me and I will tighten the parser for it.';
+    }
+
+    if (message.includes('Unable to parse range')) {
+      return 'The spreadsheet opened, but the app could not read the expected sheet tab or header row.';
+    }
+
+    return message;
+  }
+
+  return error instanceof Error ? error.message : 'Unknown error';
+}
