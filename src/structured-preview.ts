@@ -19,6 +19,7 @@ export async function loadStructuredPreview(
     trainingRows: [] as Array<{ rowNumber: number; dogName: string; detail: string }>,
   };
   const previewSkipped = [...preview.skipped];
+  const readyRows: DogRow[] = [];
 
   for (const row of preview.rows) {
     const dogName = row.dogName?.trim() || '';
@@ -37,6 +38,8 @@ export async function loadStructuredPreview(
         rowNumber: row.rowNumber,
         reason: 'Multiple dogs detected in one row',
       });
+    } else {
+      readyRows.push(row);
     }
 
     if (trainingSelected) {
@@ -50,6 +53,7 @@ export async function loadStructuredPreview(
 
   return {
     ...preview,
+    rows: readyRows,
     skipped: previewSkipped,
     warnings,
   };
