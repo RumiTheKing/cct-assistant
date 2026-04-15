@@ -119,8 +119,6 @@ export async function runStructuredBoardTool(
     if (!printDocId) throw new Error('Failed to create text document');
 
     const requests: docs_v1.Schema$Request[] = [];
-    const styleRequests: docs_v1.Schema$Request[] = [];
-    let currentIndex = 1;
 
     for (let i = 0; i < sectionTexts.length; i++) {
       const sectionText = sectionTexts[i];
@@ -130,8 +128,6 @@ export async function runStructuredBoardTool(
           text: sectionText,
         },
       });
-      styleRequests.push(...buildTextDocumentStyleRequests(sectionText, currentIndex));
-      currentIndex += sectionText.length;
 
       if (i < sectionTexts.length - 1) {
         requests.push({
@@ -139,11 +135,8 @@ export async function runStructuredBoardTool(
             endOfSegmentLocation: {},
           },
         });
-        currentIndex += 1;
       }
     }
-
-    requests.push(...styleRequests);
 
     await docs.documents.batchUpdate({
       documentId: printDocId,
@@ -151,6 +144,17 @@ export async function runStructuredBoardTool(
         requests,
       },
     });
+
+    const insertedDoc = await docs.documents.get({ documentId: printDocId });
+    const normalizationRequests = buildDocumentNormalizationRequests(insertedDoc.data);
+    if (normalizationRequests.length) {
+      await docs.documents.batchUpdate({
+        documentId: printDocId,
+        requestBody: {
+          requests: normalizationRequests,
+        },
+      });
+    }
 
     printDocUrl = `https://docs.google.com/document/d/${printDocId}/edit`;
 
@@ -332,56 +336,92 @@ function buildStructuredSection(row: DogRow, analysis: StructuredAnalysis): stri
   ].join('\n');
 }
 
-function buildTextDocumentStyleRequests(sectionText: string, baseIndex: number): docs_v1.Schema$Request[] {
+function buildDocumentNormalizationRequests(document: docs_v1.Schema$Document): docs_v1.Schema$Request[] {
   const requests: docs_v1.Schema$Request[] = [];
-  const boldTargets = [
-    'Please text me when you\'re on your way!',
+  const paragraphs = document.body?.content?.filter((item) => item.paragraph) || [];
+  const fullLineBolds = new Set([
     'My address is: 14719 S Oak Point Dr Bluffdale, UT 84065',
-    'Please send full payment 1+ day before check in. :)',
-    'Check in:',
-    'Check out:',
     'Total Calendar Days:',
     'Add-ons:',
-    'Holiday (y/n):',
     'Total Invoice:',
+    'Please send full payment 1+ day before check in. :)',
+  ]);
+  const prefixBolds = [
+    'Check in:',
+    'Check out:',
+    'Please text me when you\'re on your way!',
+    'Holiday (y/n):',
   ];
 
-  const titleRegex = /^.* BOARD INFO!$/gm;
-  let titleMatch: RegExpExecArray | null;
-  while ((titleMatch = titleRegex.exec(sectionText)) !== null) {
-    requests.push(makeBoldRequest(baseIndex + titleMatch.index, baseIndex + titleMatch.index + titleMatch[0].length, true, 14));
-  }
+  for (const item of paragraphs) {
+    const paragraph = item.paragraph;
+    const elements = paragraph?.elements || [];
+    const startIndex = item.startIndex;
+    const endIndex = item.endIndex;
+    if (startIndex == null || endIndex == null || endIndex <= startIndex + 1) continue;
 
-  for (const target of boldTargets) {
-    let fromIndex = 0;
-    while (fromIndex < sectionText.length) {
-      const foundAt = sectionText.indexOf(target, fromIndex);
-      if (foundAt === -1) break;
-      requests.push(makeBoldRequest(baseIndex + foundAt, baseIndex + foundAt + target.length));
-      fromIndex = foundAt + target.length;
+    const paragraphText = elements
+      .map((el) => el.textRun?.content || '')
+      .join('')
+      .replace(/\n$/, '');
+
+    requests.push({
+      updateTextStyle: {
+        range: { startIndex, endIndex: endIndex - 1 },
+        textStyle: {
+          bold: false,
+          weightedFontFamily: { fontFamily: 'Arial' },
+          fontSize: { magnitude: 11, unit: 'PT' },
+        },
+        fields: 'bold,weightedFontFamily,fontSize',
+      },
+    });
+
+    if (/ BOARD INFO!$/.test(paragraphText)) {
+      requests.push({
+        updateTextStyle: {
+          range: { startIndex, endIndex: endIndex - 1 },
+          textStyle: {
+            bold: true,
+            weightedFontFamily: { fontFamily: 'Arial' },
+            fontSize: { magnitude: 14, unit: 'PT' },
+          },
+          fields: 'bold,weightedFontFamily,fontSize',
+        },
+      });
+      continue;
+    }
+
+    if (fullLineBolds.has(paragraphText)) {
+      requests.push({
+        updateTextStyle: {
+          range: { startIndex, endIndex: endIndex - 1 },
+          textStyle: {
+            bold: true,
+          },
+          fields: 'bold',
+        },
+      });
+      continue;
+    }
+
+    for (const prefix of prefixBolds) {
+      if (paragraphText.startsWith(prefix)) {
+        requests.push({
+          updateTextStyle: {
+            range: { startIndex, endIndex: startIndex + prefix.length },
+            textStyle: {
+              bold: true,
+            },
+            fields: 'bold',
+          },
+        });
+        break;
+      }
     }
   }
 
   return requests;
-}
-
-function makeBoldRequest(startIndex: number, endIndex: number, title = false, fontSize = 11): docs_v1.Schema$Request {
-  return {
-    updateTextStyle: {
-      range: {
-        startIndex,
-        endIndex,
-      },
-      textStyle: {
-        bold: true,
-        weightedFontFamily: { fontFamily: 'Arial' },
-        fontSize: { magnitude: fontSize, unit: 'PT' },
-      },
-      fields: title
-        ? 'bold,weightedFontFamily,fontSize'
-        : 'bold,weightedFontFamily,fontSize',
-    },
-  };
 }
 
 function parseSheetDate(value?: string): Date | null {
