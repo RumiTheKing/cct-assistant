@@ -119,7 +119,8 @@ export async function runStructuredBoardTool(
     if (!printDocId) throw new Error('Failed to create text document');
 
     const requests: docs_v1.Schema$Request[] = [];
-    let fullText = '';
+    const styleRequests: docs_v1.Schema$Request[] = [];
+    let currentIndex = 1;
 
     for (let i = 0; i < sectionTexts.length; i++) {
       const sectionText = sectionTexts[i];
@@ -129,7 +130,8 @@ export async function runStructuredBoardTool(
           text: sectionText,
         },
       });
-      fullText += sectionText;
+      styleRequests.push(...buildTextDocumentStyleRequests(sectionText, currentIndex));
+      currentIndex += sectionText.length;
 
       if (i < sectionTexts.length - 1) {
         requests.push({
@@ -137,11 +139,11 @@ export async function runStructuredBoardTool(
             endOfSegmentLocation: {},
           },
         });
-        fullText += '\n';
+        currentIndex += 1;
       }
     }
 
-    requests.push(...buildTextDocumentStyleRequests(fullText));
+    requests.push(...styleRequests);
 
     await docs.documents.batchUpdate({
       documentId: printDocId,
@@ -330,7 +332,7 @@ function buildStructuredSection(row: DogRow, analysis: StructuredAnalysis): stri
   ].join('\n');
 }
 
-function buildTextDocumentStyleRequests(fullText: string): docs_v1.Schema$Request[] {
+function buildTextDocumentStyleRequests(sectionText: string, baseIndex: number): docs_v1.Schema$Request[] {
   const requests: docs_v1.Schema$Request[] = [];
   const boldTargets = [
     'Please text me when you\'re on your way!',
@@ -346,16 +348,16 @@ function buildTextDocumentStyleRequests(fullText: string): docs_v1.Schema$Reques
 
   const titleRegex = /^.* BOARD INFO!$/gm;
   let titleMatch: RegExpExecArray | null;
-  while ((titleMatch = titleRegex.exec(fullText)) !== null) {
-    requests.push(makeBoldRequest(titleMatch.index, titleMatch.index + titleMatch[0].length, true, 14));
+  while ((titleMatch = titleRegex.exec(sectionText)) !== null) {
+    requests.push(makeBoldRequest(baseIndex + titleMatch.index, baseIndex + titleMatch.index + titleMatch[0].length, true, 14));
   }
 
   for (const target of boldTargets) {
     let fromIndex = 0;
-    while (fromIndex < fullText.length) {
-      const foundAt = fullText.indexOf(target, fromIndex);
+    while (fromIndex < sectionText.length) {
+      const foundAt = sectionText.indexOf(target, fromIndex);
       if (foundAt === -1) break;
-      requests.push(makeBoldRequest(foundAt, foundAt + target.length));
+      requests.push(makeBoldRequest(baseIndex + foundAt, baseIndex + foundAt + target.length));
       fromIndex = foundAt + target.length;
     }
   }
@@ -363,12 +365,12 @@ function buildTextDocumentStyleRequests(fullText: string): docs_v1.Schema$Reques
   return requests;
 }
 
-function makeBoldRequest(start: number, end: number, title = false, fontSize = 11): docs_v1.Schema$Request {
+function makeBoldRequest(startIndex: number, endIndex: number, title = false, fontSize = 11): docs_v1.Schema$Request {
   return {
     updateTextStyle: {
       range: {
-        startIndex: start + 1,
-        endIndex: end + 1,
+        startIndex,
+        endIndex,
       },
       textStyle: {
         bold: true,
