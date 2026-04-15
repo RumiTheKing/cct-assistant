@@ -162,7 +162,7 @@ function formatApiError(error: unknown): string {
       : error.message;
 
     if (message.includes('This operation is not supported for this document')) {
-      return 'That link appears valid, but Google is not treating it like a normal Sheet tab for this action. Please make sure the link points to a standard Google Sheet tab, or send it to me and I will tighten the parser for it.';
+      return 'That link appears valid, but Google is not treating it like a normal Sheet tab for this action. Please make sure the link points to a standard Google Sheet tab.';
     }
 
     if (message.includes('Unable to parse range')) {
