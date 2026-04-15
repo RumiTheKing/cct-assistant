@@ -41,5 +41,6 @@ export const YELLOW_RGB = { red: 1, green: 0.996, blue: 0 };
 export const ORANGE_RGB = { red: 1, green: 0.6, blue: 0.2 };
 export const RED_RGB = { red: 0.8, green: 0.2, blue: 0.2 };
 export const WHITE_RGB = { red: 1, green: 1, blue: 1 };
+export const BLACK_RGB = { red: 0, green: 0, blue: 0 };
 export const KEYCHAIN_SERVICE = 'cohesive-canine-assistant-google-oauth';
 export const LEGACY_TOKENS_PATH = 'state/google-oauth.json';

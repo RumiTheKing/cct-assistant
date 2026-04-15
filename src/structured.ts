@@ -1,5 +1,5 @@
 import { docs_v1, sheets_v4 } from 'googleapis';
-import { COLUMN_NAMES, ORANGE_RGB, RED_RGB, WHITE_RGB, YELLOW_RGB } from './config';
+import { BLACK_RGB, COLUMN_NAMES, ORANGE_RGB, RED_RGB, YELLOW_RGB } from './config';
 import { columnToLetter, ensureCustomTrackingColumns, loadRows } from './sheets';
 import { DogRow, RunResult } from './types';
 
@@ -68,7 +68,7 @@ export async function runStructuredBoardTool(
           row.rowNumber,
           COLUMN_NAMES.optionalAdventures,
           RED_RGB,
-          WHITE_RGB
+          BLACK_RGB
         );
       }
 
@@ -85,7 +85,7 @@ export async function runStructuredBoardTool(
           row.rowNumber,
           COLUMN_NAMES.dogName,
           RED_RGB,
-          WHITE_RGB
+          BLACK_RGB
         );
         skipped.push({ rowNumber: row.rowNumber, reason: 'Multiple dogs detected in one row' });
         continue;
