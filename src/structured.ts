@@ -59,7 +59,15 @@ export async function runStructuredBoardTool(
           dogName: row.dogName?.trim() || 'Unknown',
           reason: 'Multiple dogs detected in one row',
         });
-        await flagDogNameCell(sheets, spreadsheetId, preview.title, row.rowNumber, RED_RGB, WHITE_RGB);
+        await flagNamedCell(
+          sheets,
+          spreadsheetId,
+          preview.title,
+          row.rowNumber,
+          COLUMN_NAMES.dogName,
+          RED_RGB,
+          WHITE_RGB
+        );
         skipped.push({ rowNumber: row.rowNumber, reason: 'Multiple dogs detected in one row' });
         continue;
       }
@@ -71,7 +79,24 @@ export async function runStructuredBoardTool(
           detail: analysis.trainingDetail,
         });
         await flagWholeRow(sheets, spreadsheetId, preview.title, row.rowNumber, ORANGE_RGB);
-        await flagDogNameCell(sheets, spreadsheetId, preview.title, row.rowNumber, RED_RGB, WHITE_RGB);
+        await flagNamedCell(
+          sheets,
+          spreadsheetId,
+          preview.title,
+          row.rowNumber,
+          COLUMN_NAMES.dogName,
+          RED_RGB,
+          WHITE_RGB
+        );
+        await flagNamedCell(
+          sheets,
+          spreadsheetId,
+          preview.title,
+          row.rowNumber,
+          COLUMN_NAMES.optionalAdventures,
+          RED_RGB,
+          WHITE_RGB
+        );
       }
 
       sections.push(buildStructuredSection(row, analysis));
@@ -106,7 +131,7 @@ export async function runStructuredBoardTool(
           {
             insertText: {
               endOfSegmentLocation: {},
-              text: sections.join('\n'),
+              text: sections.join('\n--------------------\n\n'),
             },
           },
         ],
@@ -372,13 +397,6 @@ async function writeStructuredTrackingValues(
   const sheetId = sheet?.properties?.sheetId;
   if (sheetId === undefined) return;
 
-  const headerRes = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: `${sheetTitle}!1:1`,
-  });
-  const header = headerRes.data.values?.[0] || [];
-  const emailColIndex = header.indexOf(COLUMN_NAMES.email) + 1;
-
   const updates = [
     { colIndex: trackingColumns[STRUCTURED_STATUS_COLUMN], value: status },
     { colIndex: trackingColumns[STRUCTURED_DOC_URL_COLUMN], value: docUrl },
@@ -404,26 +422,6 @@ async function writeStructuredTrackingValues(
           endRowIndex: rowNumber,
           startColumnIndex: trackingColumns[STRUCTURED_STATUS_COLUMN] - 1,
           endColumnIndex: trackingColumns[STRUCTURED_STATUS_COLUMN],
-        },
-        cell: {
-          userEnteredFormat: {
-            backgroundColor: YELLOW_RGB,
-          },
-        },
-        fields: 'userEnteredFormat.backgroundColor',
-      },
-    });
-  }
-
-  if (emailColIndex > 0) {
-    requests.push({
-      repeatCell: {
-        range: {
-          sheetId,
-          startRowIndex: rowNumber - 1,
-          endRowIndex: rowNumber,
-          startColumnIndex: emailColIndex - 1,
-          endColumnIndex: emailColIndex,
         },
         cell: {
           userEnteredFormat: {
@@ -482,11 +480,12 @@ async function flagWholeRow(
   });
 }
 
-async function flagDogNameCell(
+async function flagNamedCell(
   sheets: sheets_v4.Sheets,
   spreadsheetId: string,
   sheetTitle: string,
   rowNumber: number,
+  columnName: string,
   backgroundColor: { red: number; green: number; blue: number },
   foregroundColor?: { red: number; green: number; blue: number }
 ) {
@@ -500,8 +499,8 @@ async function flagDogNameCell(
     range: `${sheetTitle}!1:1`,
   });
   const header = headerRes.data.values?.[0] || [];
-  const dogNameColIndex = header.indexOf(COLUMN_NAMES.dogName) + 1;
-  if (dogNameColIndex <= 0) return;
+  const colIndex = header.indexOf(columnName) + 1;
+  if (colIndex <= 0) return;
 
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId,
@@ -513,8 +512,8 @@ async function flagDogNameCell(
               sheetId,
               startRowIndex: rowNumber - 1,
               endRowIndex: rowNumber,
-              startColumnIndex: dogNameColIndex - 1,
-              endColumnIndex: dogNameColIndex,
+              startColumnIndex: colIndex - 1,
+              endColumnIndex: colIndex,
             },
             cell: {
               userEnteredFormat: {
