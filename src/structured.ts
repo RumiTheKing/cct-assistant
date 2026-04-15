@@ -124,6 +124,8 @@ export async function runStructuredBoardTool(
     printDocId = doc.data.documentId || undefined;
     if (!printDocId) throw new Error('Failed to create text document');
 
+    const fullText = sections.join('\n--------------------\n\n');
+
     await docs.documents.batchUpdate({
       documentId: printDocId,
       requestBody: {
@@ -131,9 +133,10 @@ export async function runStructuredBoardTool(
           {
             insertText: {
               endOfSegmentLocation: {},
-              text: sections.join('\n--------------------\n\n'),
+              text: fullText,
             },
           },
+          ...buildTextDocumentStyleRequests(fullText),
         ],
       },
     });
@@ -316,6 +319,58 @@ function buildStructuredSection(row: DogRow, analysis: StructuredAnalysis): stri
     'Here’s my venmo -',
     '',
   ].join('\n');
+}
+
+function buildTextDocumentStyleRequests(fullText: string): docs_v1.Schema$Request[] {
+  const requests: docs_v1.Schema$Request[] = [];
+  const boldTargets = [
+    'Please text me when you\'re on your way!',
+    'My address is: 14719 S Oak Point Dr Bluffdale, UT 84065',
+    'Please send full payment 1+ day before check in. :)',
+    'Check in:',
+    'Check out:',
+    'Total Calendar Days:',
+    'Add-ons:',
+    'Holiday (y/n):',
+    'Total Invoice:',
+  ];
+
+  const titleRegex = /^.* BOARD INFO!$/gm;
+  let titleMatch: RegExpExecArray | null;
+  while ((titleMatch = titleRegex.exec(fullText)) !== null) {
+    requests.push(makeBoldRequest(titleMatch.index, titleMatch.index + titleMatch[0].length, true, 14));
+  }
+
+  for (const target of boldTargets) {
+    let fromIndex = 0;
+    while (fromIndex < fullText.length) {
+      const foundAt = fullText.indexOf(target, fromIndex);
+      if (foundAt === -1) break;
+      requests.push(makeBoldRequest(foundAt, foundAt + target.length));
+      fromIndex = foundAt + target.length;
+    }
+  }
+
+  return requests;
+}
+
+function makeBoldRequest(start: number, end: number, title = false, fontSize = 11): docs_v1.Schema$Request {
+  return {
+    updateTextStyle: {
+      range: {
+        startIndex: start + 1,
+        endIndex: end + 1,
+      },
+      textStyle: {
+        bold: true,
+        weightedFontFamily: { fontFamily: 'Arial' },
+        fontSize: { magnitude: fontSize, unit: 'PT' },
+      },
+      fields: title
+        ? 'bold,weightedFontFamily,fontSize'
+        : 'bold,weightedFontFamily,fontSize',
+    },
+  };
 }
 
 function parseSheetDate(value?: string): Date | null {
