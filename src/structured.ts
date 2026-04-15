@@ -1,10 +1,23 @@
 import { docs_v1, sheets_v4 } from 'googleapis';
-import { COLUMN_NAMES, YELLOW_RGB } from './config';
+import { COLUMN_NAMES, ORANGE_RGB, RED_RGB, WHITE_RGB, YELLOW_RGB } from './config';
 import { columnToLetter, ensureCustomTrackingColumns, loadRows } from './sheets';
-import { RunResult } from './types';
+import { DogRow, RunResult } from './types';
 
 const STRUCTURED_STATUS_COLUMN = 'Structured Status';
 const STRUCTURED_DOC_URL_COLUMN = 'Structured Doc URL';
+const US_BANK_HOLIDAYS = [
+  '2026-01-01',
+  '2026-01-19',
+  '2026-02-16',
+  '2026-05-25',
+  '2026-06-19',
+  '2026-07-03',
+  '2026-09-07',
+  '2026-10-12',
+  '2026-11-11',
+  '2026-11-26',
+  '2026-12-25',
+];
 
 export async function runStructuredBoardTool(
   sheets: sheets_v4.Sheets,
@@ -25,21 +38,49 @@ export async function runStructuredBoardTool(
   ]);
 
   const now = new Date();
-  const docTitle = `STRUCTURED BOARD - ${now.toISOString().replace(/[:T]/g, '-').slice(0, 16)}`;
-  const completedStatus = `Structured Print Created ${now.toISOString().slice(0, 10)}`;
+  const docTitle = `TEXT DOCUMENT - ${now.toISOString().replace(/[:T]/g, '-').slice(0, 16)}`;
+  const completedStatus = `Text Document Created ${now.toISOString().slice(0, 10)}`;
 
   const processed: RunResult['processed'] = [];
   const skipped = [...preview.skipped];
   const sections: string[] = [];
+  const warnings = {
+    multiDogRows: [...(preview.warnings?.multiDogRows || [])],
+    trainingRows: [...(preview.warnings?.trainingRows || [])],
+  };
 
   for (const row of preview.rows) {
     try {
-      sections.push(buildStructuredSection(row));
+      const analysis = analyzeStructuredRow(row);
+
+      if (analysis.multiDogDetected) {
+        warnings.multiDogRows.push({
+          rowNumber: row.rowNumber,
+          dogName: row.dogName?.trim() || 'Unknown',
+          reason: 'Multiple dogs detected in one row',
+        });
+        await flagDogNameCell(sheets, spreadsheetId, preview.title, row.rowNumber, RED_RGB, WHITE_RGB);
+        skipped.push({ rowNumber: row.rowNumber, reason: 'Multiple dogs detected in one row' });
+        continue;
+      }
+
+      if (analysis.trainingSelected) {
+        warnings.trainingRows.push({
+          rowNumber: row.rowNumber,
+          dogName: row.dogName?.trim() || 'Unknown',
+          detail: analysis.trainingDetail,
+        });
+        await flagDogNameCell(sheets, spreadsheetId, preview.title, row.rowNumber, ORANGE_RGB);
+      }
+
+      sections.push(buildStructuredSection(row, analysis));
       processed.push({
         rowNumber: row.rowNumber,
         dogName: row.dogName || 'Unknown',
         email: row.email || '',
         status: completedStatus,
+        totalInvoice: analysis.totalInvoice,
+        addOnsSummary: analysis.addOnsSummary,
       });
     } catch (error) {
       skipped.push({
@@ -55,7 +96,7 @@ export async function runStructuredBoardTool(
   if (sections.length > 0) {
     const doc = await docs.documents.create({ requestBody: { title: docTitle } });
     printDocId = doc.data.documentId || undefined;
-    if (!printDocId) throw new Error('Failed to create structured board document');
+    if (!printDocId) throw new Error('Failed to create text document');
 
     await docs.documents.batchUpdate({
       documentId: printDocId,
@@ -93,6 +134,7 @@ export async function runStructuredBoardTool(
     printDocUrl,
     processed,
     skipped,
+    warnings,
     summary: {
       processedCount: processed.length,
       skippedCount: skipped.length,
@@ -106,27 +148,213 @@ export async function runStructuredBoardTool(
   };
 }
 
-function buildStructuredSection(row: { [key: string]: string | number | undefined }): string {
+type StructuredAnalysis = {
+  totalCalendarDays: number;
+  holidayChargeApplied: boolean;
+  baseCharge: number;
+  addOnsCharge: number;
+  totalInvoice: number;
+  addOnsSummary: string;
+  multiDogDetected: boolean;
+  trainingSelected: boolean;
+  trainingDetail: string;
+};
+
+function analyzeStructuredRow(row: DogRow): StructuredAnalysis {
+  const dogName = row.dogName?.trim() || '';
+  const multiDogDetected = /,|&|\/|\band\b/i.test(dogName);
+  const calendarCharges = calculateCalendarCharges(row);
+  const optionalText = (row.optionalAdventures || '').toLowerCase();
+  const bathRequest = (row.bathRequest || '').toLowerCase();
+  const trainingDetail = (row.trainingDetails || '').trim();
+  const trainingSelected = optionalText.includes('training') || Boolean(trainingDetail);
+
+  const addOns: string[] = [];
+  let addOnsCharge = 0;
+
+  if (optionalText.includes('hike')) {
+    addOns.push('Hike ($100)');
+    addOnsCharge += 100;
+  }
+  if (optionalText.includes('field trip')) {
+    addOns.push('Field Trip ($50)');
+    addOnsCharge += 50;
+  }
+  if (optionalText.includes('dock diving')) {
+    addOns.push('Dock Diving ($65)');
+    addOnsCharge += 65;
+  }
+  if (trainingSelected) {
+    addOns.push('Training selected, review manually');
+  }
+
+  const stayDays = calendarCharges.totalCalendarDays;
+  const weight = Number.parseFloat((row.dogWeight || '').trim());
+  const bathIncluded = stayDays >= 10 || optionalText.includes('hike') || bathRequest.includes('included');
+  const bathRequested = bathRequest.includes('yes');
+
+  if (bathIncluded) {
+    addOns.push('Bath included ($0)');
+  } else if (bathRequested) {
+    const bathCharge = !Number.isNaN(weight) && weight < 30 ? 35 : 50;
+    addOns.push(`Bath ($${bathCharge})`);
+    addOnsCharge += bathCharge;
+  }
+
+  return {
+    totalCalendarDays: calendarCharges.totalCalendarDays,
+    holidayChargeApplied: calendarCharges.holidayChargeApplied,
+    baseCharge: calendarCharges.totalCharge,
+    addOnsCharge,
+    totalInvoice: calendarCharges.totalCharge + addOnsCharge,
+    addOnsSummary: addOns.length ? addOns.join(', ') : 'None',
+    multiDogDetected,
+    trainingSelected,
+    trainingDetail: trainingDetail || 'Training selected',
+  };
+}
+
+function calculateCalendarCharges(row: DogRow) {
+  const checkInDate = parseSheetDate(row.checkInDate);
+  const checkOutDate = parseSheetDate(row.checkOutDate);
+  const checkInHour = parseSheetTimeHour(row.checkInTime);
+  const checkOutHour = parseSheetTimeHour(row.checkOutTime);
+
+  if (!checkInDate || !checkOutDate) {
+    return { totalCalendarDays: 0, totalCharge: 0, holidayChargeApplied: false };
+  }
+
+  const days: Date[] = [];
+  const cursor = new Date(checkInDate.getTime());
+  while (cursor <= checkOutDate) {
+    days.push(new Date(cursor.getTime()));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  let totalCharge = 0;
+  let holidayChargeApplied = false;
+
+  for (let i = 0; i < days.length; i++) {
+    const current = days[i];
+    let dayCharge = 80;
+
+    if (i === 0 && checkInHour !== null && checkInHour >= 15) {
+      dayCharge = 40;
+    }
+    if (i === days.length - 1 && checkOutHour !== null && checkOutHour < 12) {
+      dayCharge = Math.min(dayCharge, 40);
+    }
+
+    const iso = toIsoDate(current);
+    if (US_BANK_HOLIDAYS.includes(iso)) {
+      dayCharge *= 2;
+      holidayChargeApplied = true;
+    }
+
+    totalCharge += dayCharge;
+  }
+
+  return {
+    totalCalendarDays: days.length,
+    totalCharge,
+    holidayChargeApplied,
+  };
+}
+
+function buildStructuredSection(row: DogRow, analysis: StructuredAnalysis): string {
+  const dogName = row.dogName?.trim() || 'Dog';
   return [
-    `Dog Name: ${row.dogName || 'N/A'}`,
-    `Client Name: ${row.clientName || 'N/A'}`,
-    `Check In: ${joinDateTime(asString(row.checkInDate), asString(row.checkInTime)) || 'N/A'}`,
-    `Check Out: ${joinDateTime(asString(row.checkOutDate), asString(row.checkOutTime)) || 'N/A'}`,
-    `Breed: ${row.dogBreed || 'N/A'}`,
-    `Age: ${row.dogAge || 'N/A'}`,
-    `Goals: ${row.goals || 'N/A'}`,
-    `Top Issues: ${row.issues || 'N/A'}`,
+    `${dogName} BOARD INFO!`,
+    '',
+    `Check in: ${joinDateTime(formatSheetDate(row.checkInDate), formatSheetTime(row.checkInTime)) || 'N/A'}`,
+    `Check out: ${joinDateTime(formatSheetDate(row.checkOutDate), formatSheetTime(row.checkOutTime)) || 'N/A'}`,
+    '',
+    "Please text me when you're on your way! For safety, all dogs need to be secured before you arrive, so if you're running early or late, please let me know. Exact ETAs are super helpful! (Example: \"Arriving at 8:04pm!\")",
+    '',
+    'We treat all check-in/check-out times like appointments, so please be on time. If you\'re running late, we require at least 30 minutes’ notice, otherwise, a $25 fee will apply.',
+    '',
+    'My address is: 14719 S Oak Point Dr Bluffdale, UT 84065',
+    'Please pack - Ecollar, remote, flat collar with ID & food packed per meal/day',
+    '',
+    'Total Calendar Days:',
+    `${analysis.totalCalendarDays}`,
+    'Add-ons:',
+    analysis.addOnsSummary,
+    `Holiday (y/n): ${analysis.holidayChargeApplied ? 'y' : 'n'}`,
+    'Total Invoice:',
+    `$${analysis.totalInvoice}`,
+    '',
+    'Please send full payment 1+ day before check in. :)',
+    '10% cancellation fee if cancelled with less than 7 day notice',
+    'Let me know if you have any questions!',
+    'Here’s my venmo -',
     '',
   ].join('\n');
 }
 
-function asString(value: string | number | undefined): string | undefined {
-  return typeof value === 'string' ? value : undefined;
+function parseSheetDate(value?: string): Date | null {
+  if (!value?.trim()) return null;
+  const raw = value.trim();
+
+  if (/^\d+(\.\d+)?$/.test(raw)) {
+    const serial = Number(raw);
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const millis = serial * 24 * 60 * 60 * 1000;
+    const date = new Date(excelEpoch.getTime() + millis);
+    return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+  }
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+}
+
+function parseSheetTimeHour(value?: string): number | null {
+  if (!value?.trim()) return null;
+  const raw = value.trim();
+
+  if (/^\d+(\.\d+)?$/.test(raw)) {
+    const numeric = Number(raw);
+    if (numeric >= 0 && numeric < 1) return numeric * 24;
+    return numeric;
+  }
+
+  const match = raw.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  if (!match) return null;
+  let hour = Number(match[1]);
+  const minutes = Number(match[2] || '0');
+  const meridiem = (match[3] || '').toLowerCase();
+  if (meridiem === 'pm' && hour < 12) hour += 12;
+  if (meridiem === 'am' && hour === 12) hour = 0;
+  return hour + minutes / 60;
+}
+
+function formatSheetDate(value?: string): string | undefined {
+  const date = parseSheetDate(value);
+  if (!date) return value?.trim() || undefined;
+  return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+}
+
+function formatSheetTime(value?: string): string | undefined {
+  const hour = parseSheetTimeHour(value);
+  if (hour === null) return value?.trim() || undefined;
+  const wholeHour = Math.floor(hour);
+  const minutes = Math.round((hour - wholeHour) * 60);
+  const suffix = wholeHour >= 12 ? 'PM' : 'AM';
+  let displayHour = wholeHour % 12;
+  if (displayHour === 0) displayHour = 12;
+  return `${displayHour}:${String(minutes).padStart(2, '0')} ${suffix}`;
 }
 
 function joinDateTime(date?: string, time?: string): string | undefined {
   const parts = [date?.trim(), time?.trim()].filter(Boolean);
   return parts.length ? parts.join(' ') : undefined;
+}
+
+function toIsoDate(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate()
+  ).padStart(2, '0')}`;
 }
 
 async function writeStructuredTrackingValues(
@@ -212,4 +440,59 @@ async function writeStructuredTrackingValues(
       requestBody: { requests },
     });
   }
+}
+
+async function flagDogNameCell(
+  sheets: sheets_v4.Sheets,
+  spreadsheetId: string,
+  sheetTitle: string,
+  rowNumber: number,
+  backgroundColor: { red: number; green: number; blue: number },
+  foregroundColor?: { red: number; green: number; blue: number }
+) {
+  const meta = await sheets.spreadsheets.get({ spreadsheetId });
+  const sheet = meta.data.sheets?.find((s) => s.properties?.title === sheetTitle);
+  const sheetId = sheet?.properties?.sheetId;
+  if (sheetId === undefined) return;
+
+  const headerRes = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `${sheetTitle}!1:1`,
+  });
+  const header = headerRes.data.values?.[0] || [];
+  const dogNameColIndex = header.indexOf(COLUMN_NAMES.dogName) + 1;
+  if (dogNameColIndex <= 0) return;
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId,
+    requestBody: {
+      requests: [
+        {
+          repeatCell: {
+            range: {
+              sheetId,
+              startRowIndex: rowNumber - 1,
+              endRowIndex: rowNumber,
+              startColumnIndex: dogNameColIndex - 1,
+              endColumnIndex: dogNameColIndex,
+            },
+            cell: {
+              userEnteredFormat: {
+                backgroundColor,
+                textFormat: foregroundColor
+                  ? {
+                      foregroundColor,
+                      bold: true,
+                    }
+                  : undefined,
+              },
+            },
+            fields: foregroundColor
+              ? 'userEnteredFormat.backgroundColor,userEnteredFormat.textFormat.foregroundColor,userEnteredFormat.textFormat.bold'
+              : 'userEnteredFormat.backgroundColor',
+          },
+        },
+      ],
+    },
+  });
 }

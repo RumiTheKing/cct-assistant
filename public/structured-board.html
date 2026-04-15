@@ -34,7 +34,7 @@
     </div>
 
     <h1 style="margin-bottom: 6px">Structured Board Tool</h1>
-    <p class="muted" style="margin-top: 0">Creates a structured print document from your sheet with its own duplicate protection and tracking.</p>
+    <p class="muted" style="margin-top: 0">Creates a Text Document from your sheet with pricing logic, duplicate protection, and warning flags.</p>
 
     <div class="card">
       <label for="sheetUrl">Google Sheet URL or spreadsheet ID</label>
@@ -43,7 +43,7 @@
         <button id="previewBtn">Preview Rows</button>
         <button id="runBtn" class="primary">Create Structured Print Doc</button>
       </div>
-      <div id="actionNote" class="muted action-note">This tool uses generic structured output for now. We can refine the fields and layout next.</div>
+      <div id="actionNote" class="muted action-note">This tool now includes starter pricing, holiday logic, add-ons, and row warnings. We can refine the exact document layout next.</div>
     </div>
 
     <div class="card">
@@ -73,6 +73,22 @@
         if (message) actionNote.textContent = message;
       }
 
+      function renderWarnings(warnings) {
+        if (!warnings) return '';
+        const multiDogRows = warnings.multiDogRows || [];
+        const trainingRows = warnings.trainingRows || [];
+        return `
+          ${multiDogRows.length ? `
+            <h3 class="section-title">Rows with multiple dogs detected</h3>
+            <ul>${multiDogRows.map((item) => `<li>Row ${item.rowNumber}: ${escapeHtml(item.dogName)} (${escapeHtml(item.reason)})</li>`).join('')}</ul>
+          ` : ''}
+          ${trainingRows.length ? `
+            <h3 class="section-title">Rows with training selected</h3>
+            <ul>${trainingRows.map((item) => `<li>Row ${item.rowNumber}: ${escapeHtml(item.dogName)} (${escapeHtml(item.detail)})</li>`).join('')}</ul>
+          ` : ''}
+        `;
+      }
+
       function renderPreview(data) {
         const rows = data.rows || [];
         const skipped = data.skipped || [];
@@ -82,13 +98,17 @@
             <div class="summary">
               <div class="summary-box"><span class="soft">Ready to structure</span><strong>${rows.length}</strong></div>
               <div class="summary-box"><span class="soft">Will be skipped</span><strong>${skipped.length}</strong></div>
+              <div class="summary-box"><span class="soft">Training warnings</span><strong>${(data.warnings?.trainingRows || []).length}</strong></div>
+              <div class="summary-box"><span class="soft">Multi-dog warnings</span><strong>${(data.warnings?.multiDogRows || []).length}</strong></div>
             </div>
+            ${renderWarnings(data.warnings)}
             <h3 class="section-title">Rows ready to process</h3>
             ${rows.length ? rows.slice(0, 20).map((row) => `
               <div class="result-card">
                 <strong>Row ${row.rowNumber}: ${escapeHtml(row.dogName || 'Unknown dog')}</strong>
                 <div class="soft">Client: ${escapeHtml(row.clientName || 'Unknown client')}</div>
                 <div class="soft">Check in: ${escapeHtml(row.checkInDate || 'N/A')} ${escapeHtml(row.checkInTime || '')}</div>
+                <div class="soft">Check out: ${escapeHtml(row.checkOutDate || 'N/A')} ${escapeHtml(row.checkOutTime || '')}</div>
               </div>
             `).join('') : '<p class="soft">No rows are currently ready.</p>'}
             <h3 class="section-title">Rows that will be skipped</h3>
@@ -102,8 +122,8 @@
         const processed = Array.isArray(data.processed) ? data.processed : [];
         const skipped = Array.isArray(data.skipped) ? data.skipped : [];
         const printDocLine = data.printDocTitle
-          ? `<p><strong>Structured document:</strong> ${data.printDocUrl ? `<a href="${escapeHtml(data.printDocUrl)}" target="_blank" rel="noreferrer">${escapeHtml(data.printDocTitle)}</a>` : escapeHtml(data.printDocTitle)}</p>`
-          : '<p><strong>Structured document:</strong> none created because there were no new rows to process.</p>';
+          ? `<p><strong>Text Document:</strong> ${data.printDocUrl ? `<a href="${escapeHtml(data.printDocUrl)}" target="_blank" rel="noreferrer">${escapeHtml(data.printDocTitle)}</a>` : escapeHtml(data.printDocTitle)}</p>`
+          : '<p><strong>Text Document:</strong> none created because there were no new rows to process.</p>';
 
         results.innerHTML = `
           <div>
@@ -115,11 +135,14 @@
               <div class="summary-box"><span class="soft">Already completed</span><strong>${summary.alreadyCompletedCount ?? 0}</strong></div>
               <div class="summary-box"><span class="soft">Duplicate protected</span><strong>${summary.duplicateProtectedCount ?? 0}</strong></div>
             </div>
+            ${renderWarnings(data.warnings)}
             <h3 class="section-title">Rows included</h3>
             ${processed.length ? processed.map((row) => `
               <div class="result-card">
                 <strong>Row ${row.rowNumber}: ${escapeHtml(row.dogName)}</strong>
-                ${row.printDocUrl ? `<div><a href="${escapeHtml(row.printDocUrl)}" target="_blank" rel="noreferrer">Open structured doc</a></div>` : ''}
+                <div class="soft">Total invoice: ${row.totalInvoice ? `$${escapeHtml(row.totalInvoice)}` : 'Needs review'}</div>
+                <div class="soft">Add-ons: ${escapeHtml(row.addOnsSummary || 'None')}</div>
+                ${row.printDocUrl ? `<div><a href="${escapeHtml(row.printDocUrl)}" target="_blank" rel="noreferrer">Open text document</a></div>` : ''}
               </div>
             `).join('') : '<p class="soft">No new structured doc rows were created.</p>'}
             <h3 class="section-title">Skipped rows</h3>
