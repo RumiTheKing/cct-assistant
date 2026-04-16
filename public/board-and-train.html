@@ -73,6 +73,15 @@
         if (message) actionNote.textContent = message;
       }
 
+      function maskEmail(value) {
+        const email = String(value || '').trim();
+        const parts = email.split('@');
+        if (parts.length !== 2) return 'Hidden';
+        const [local, domain] = parts;
+        const safeLocal = local.length <= 1 ? '*' : `${local[0]}***`;
+        return `${safeLocal}@${domain}`;
+      }
+
       function renderPreview(data) {
         const rows = data.rows || [];
         const skipped = data.skipped || [];
@@ -88,7 +97,7 @@
               <div class="result-card">
                 <strong>Row ${row.rowNumber}: ${escapeHtml(row.dogName || 'Unknown dog')}</strong>
                 <div class="soft">Client: ${escapeHtml(row.clientName || 'Unknown client')}</div>
-                <div class="soft">Email: ${escapeHtml(row.email || 'N/A')}</div>
+                <div class="soft">Email: ${escapeHtml(maskEmail(row.email))}</div>
               </div>
             `).join('') : '<p class="soft">No rows are currently ready.</p>'}
             <h3 class="section-title">Rows that will be skipped</h3>
@@ -119,7 +128,7 @@
             ${processed.length ? processed.map((row) => `
               <div class="result-card">
                 <strong>Row ${row.rowNumber}: ${escapeHtml(row.dogName)}</strong>
-                <div class="soft">Draft created for ${escapeHtml(row.email)}</div>
+                <div class="soft">Draft created for ${escapeHtml(maskEmail(row.email))}</div>
                 ${row.printDocUrl ? `<div><a href="${escapeHtml(row.printDocUrl)}" target="_blank" rel="noreferrer">Open PRINT doc</a></div>` : ''}
               </div>
             `).join('') : '<p class="soft">No new drafts were created.</p>'}

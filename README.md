@@ -38,6 +38,8 @@ It currently includes:
 - one Google Doc per run
 - local single-user workflow
 - Google auth stored locally on the machine
+- Structured Board is intended to avoid exposing client contact info in UI/output
+- Board and Train uses email only for draft creation and should minimize visible email exposure in UI
 
 ---
 
@@ -267,6 +269,8 @@ Or later we can make:
 - draft only, no automatic sending
 - one document per run
 - rows with missing required data are skipped
+- Structured Board should not expose client email or phone details in generated output or normal UI flows
+- Board and Train uses email for Gmail draft creation, but visible email display should stay minimized
 - Google auth is local to each machine
 - template settings are local to each machine unless you manually move/export them
 - this app currently fits best as a **local app**, not a hosted Vercel-style app
