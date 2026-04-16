@@ -349,6 +349,8 @@ async function buildStructuredSection(row: DogRow, analysis: StructuredAnalysis)
     checkOut: joinDateTime(formatSheetDate(row.checkOutDate), formatSheetTime(row.checkOutTime)) || 'N/A',
     totalCalendarDays: formatBilledDays(analysis.billedCalendarDays),
     addOnsSummary: analysis.addOnsSummary,
+    addOnsLine:
+      analysis.addOnsSummary === 'None' ? 'Add-ons: None' : `Add-ons:\n${analysis.addOnsSummary}`,
     holidayYN: analysis.holidayChargeApplied ? 'y' : 'n',
     holidayDaysCharged: formatHolidayDaysCharged(analysis.holidayDaysCharged, analysis.dogCount),
     totalInvoice: `$${analysis.totalInvoice}`,
