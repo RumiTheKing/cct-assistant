@@ -1,5 +1,7 @@
 import { docs_v1, sheets_v4 } from 'googleapis';
 import { BLACK_RGB, COLUMN_NAMES, ORANGE_RGB, RED_RGB, YELLOW_RGB } from './config';
+
+const PINK_RGB = { red: 0.96, green: 0.8, blue: 0.88 };
 import { columnToLetter, ensureCustomTrackingColumns, loadRows } from './sheets';
 import { loadStructuredTemplateSettings, renderTemplate } from './template-settings';
 import { DogRow, RunResult } from './types';
@@ -77,8 +79,9 @@ export async function runStructuredBoardTool(
         warnings.multiDogRows.push({
           rowNumber: row.rowNumber,
           dogName: row.dogName?.trim() || 'Unknown',
-          reason: 'Multiple dogs detected in one row',
+          reason: `Multiple dogs detected in one row, marked for manual review (${analysis.dogCount} dogs billed together)`,
         });
+        await flagWholeRow(sheets, spreadsheetId, preview.title, row.rowNumber, PINK_RGB);
         await flagNamedCell(
           sheets,
           spreadsheetId,
@@ -88,8 +91,6 @@ export async function runStructuredBoardTool(
           RED_RGB,
           BLACK_RGB
         );
-        skipped.push({ rowNumber: row.rowNumber, reason: 'Multiple dogs detected in one row' });
-        continue;
       }
 
       const sectionText = await buildStructuredSection(row, analysis);
@@ -205,13 +206,15 @@ type StructuredAnalysis = {
   totalInvoice: number;
   addOnsSummary: string;
   multiDogDetected: boolean;
+  dogCount: number;
   trainingSelected: boolean;
   trainingDetail: string;
 };
 
 function analyzeStructuredRow(row: DogRow): StructuredAnalysis {
   const dogName = row.dogName?.trim() || '';
-  const multiDogDetected = /,|&|\/|\band\b/i.test(dogName);
+  const dogCount = getDogCount(dogName);
+  const multiDogDetected = dogCount > 1;
   const calendarCharges = calculateCalendarCharges(row);
   const optionalText = (row.optionalAdventures || '').toLowerCase();
   const bathRequest = (row.bathRequest || '').toLowerCase();
@@ -250,15 +253,24 @@ function analyzeStructuredRow(row: DogRow): StructuredAnalysis {
     addOnsCharge += bathCharge;
   }
 
+  const baseCharge = calendarCharges.totalCharge * dogCount;
+  const scaledAddOnsCharge = addOnsCharge * dogCount;
+  const addOnsSummary = addOns.length
+    ? addOns
+        .map((item) => (dogCount > 1 && /\(\$\d+\)/.test(item) ? `${item} x${dogCount}` : item))
+        .join(', ')
+    : 'None';
+
   return {
     totalCalendarDays: calendarCharges.totalCalendarDays,
     billedCalendarDays: calendarCharges.billedCalendarDays,
     holidayChargeApplied: calendarCharges.holidayChargeApplied,
-    baseCharge: calendarCharges.totalCharge,
-    addOnsCharge,
-    totalInvoice: calendarCharges.totalCharge + addOnsCharge,
-    addOnsSummary: addOns.length ? addOns.join(', ') : 'None',
+    baseCharge,
+    addOnsCharge: scaledAddOnsCharge,
+    totalInvoice: baseCharge + scaledAddOnsCharge,
+    addOnsSummary,
     multiDogDetected,
+    dogCount,
     trainingSelected,
     trainingDetail: trainingDetail || 'Training selected',
   };
@@ -436,6 +448,19 @@ function buildDocumentNormalizationRequests(
   }
 
   return requests;
+}
+
+function getDogCount(dogName: string): number {
+  if (!dogName.trim()) return 1;
+  const normalized = dogName
+    .replace(/\s+and\s+/gi, ',')
+    .replace(/&/g, ',')
+    .replace(/\//g, ',');
+  const parts = normalized
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return Math.max(1, parts.length);
 }
 
 function formatBilledDays(value: number): string {

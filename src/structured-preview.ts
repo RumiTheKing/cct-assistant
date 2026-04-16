@@ -32,15 +32,11 @@ export async function loadStructuredPreview(
       warnings.multiDogRows.push({
         rowNumber: row.rowNumber,
         dogName: row.dogName?.trim() || 'Unknown',
-        reason: 'Multiple dogs detected in one row',
+        reason: 'Multiple dogs detected in one row, will be marked for manual review',
       });
-      previewSkipped.push({
-        rowNumber: row.rowNumber,
-        reason: 'Multiple dogs detected in one row',
-      });
-    } else {
-      readyRows.push(row);
     }
+
+    readyRows.push(row);
 
     if (trainingSelected) {
       warnings.trainingRows.push({
