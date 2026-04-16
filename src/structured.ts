@@ -1,7 +1,7 @@
 import { docs_v1, sheets_v4 } from 'googleapis';
 import { BLACK_RGB, COLUMN_NAMES, ORANGE_RGB, RED_RGB, YELLOW_RGB } from './config';
 
-const PINK_RGB = { red: 0.96, green: 0.8, blue: 0.88 };
+const PINK_RGB = { red: 1, green: 0.41, blue: 0.71 };
 import { columnToLetter, ensureCustomTrackingColumns, loadRows } from './sheets';
 import { loadStructuredTemplateSettings, renderTemplate } from './template-settings';
 import { DogRow, RunResult } from './types';
