@@ -363,9 +363,7 @@ function buildDocumentNormalizationRequests(
   const paragraphs = document.body?.content?.filter((item) => item.paragraph) || [];
   const fullLineBolds = new Set([
     'My address is: 14719 S Oak Point Dr Bluffdale, UT 84065',
-    'Total Calendar Days Billed:',
     'Add-ons:',
-    'Total Invoice:',
     'Please send full payment 1+ day before check in. :)',
   ]);
   const prefixBolds = [
@@ -415,6 +413,18 @@ function buildDocumentNormalizationRequests(
     }
 
     if (fullLineBolds.has(paragraphText)) {
+      requests.push({
+        updateTextStyle: {
+          range: { startIndex, endIndex: endIndex - 1 },
+          textStyle: {
+            bold: true,
+          },
+          fields: 'bold',
+        },
+      });
+    }
+
+    if (paragraphText.startsWith('Total Invoice:')) {
       requests.push({
         updateTextStyle: {
           range: { startIndex, endIndex: endIndex - 1 },
