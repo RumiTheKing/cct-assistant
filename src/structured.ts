@@ -490,7 +490,7 @@ function formatHolidayDaysCharged(value: number, dogCount: number): string {
     notes.push('including half-days');
   }
   if (dogCount > 1) {
-    notes.push('per dog per holiday');
+    notes.push('one per dog per holiday');
   }
 
   return notes.length ? `${base} (${notes.join(', ')})` : base;
