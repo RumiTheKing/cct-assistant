@@ -258,7 +258,10 @@ function analyzeStructuredRow(row: DogRow): StructuredAnalysis {
   const scaledAddOnsCharge = addOnsCharge * dogCount;
   const addOnsSummary = addOns.length
     ? addOns
-        .map((item) => (dogCount > 1 && /\(\$\d+\)/.test(item) ? `${item} x${dogCount}` : item))
+        .map((item) => {
+          if (dogCount <= 1 || !/\(\$\d+\)/.test(item)) return item;
+          return `${item} for ${dogCount} dogs`;
+        })
         .join(', ')
     : 'None';
 
