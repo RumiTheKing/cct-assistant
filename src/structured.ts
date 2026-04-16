@@ -341,6 +341,12 @@ function buildDocumentNormalizationRequests(
     'Total Invoice:',
     'Please send full payment 1+ day before check in. :)',
   ]);
+  const prefixBolds = [
+    'Check in:',
+    'Check out:',
+    'Please text me when you\'re on your way!',
+    'Holiday (y/n):',
+  ];
 
   for (const item of paragraphs) {
     const paragraph = item.paragraph;
@@ -368,12 +374,14 @@ function buildDocumentNormalizationRequests(
 
     if (/ BOARD INFO!$/.test(paragraphText)) {
       requests.push({
-        updateParagraphStyle: {
+        updateTextStyle: {
           range: { startIndex, endIndex: endIndex - 1 },
-          paragraphStyle: {
-            namedStyleType: 'HEADING_2',
+          textStyle: {
+            bold: true,
+            weightedFontFamily: { fontFamily: 'Arial' },
+            fontSize: { magnitude: 14, unit: 'PT' },
           },
-          fields: 'namedStyleType',
+          fields: 'bold,weightedFontFamily,fontSize',
         },
       });
       continue;
@@ -381,15 +389,29 @@ function buildDocumentNormalizationRequests(
 
     if (fullLineBolds.has(paragraphText)) {
       requests.push({
-        updateParagraphStyle: {
+        updateTextStyle: {
           range: { startIndex, endIndex: endIndex - 1 },
-          paragraphStyle: {
-            namedStyleType: 'HEADING_6',
+          textStyle: {
+            bold: true,
           },
-          fields: 'namedStyleType',
+          fields: 'bold',
         },
       });
-      continue;
+    }
+
+    for (const prefix of prefixBolds) {
+      if (paragraphText.startsWith(prefix)) {
+        requests.push({
+          updateTextStyle: {
+            range: { startIndex, endIndex: startIndex + prefix.length },
+            textStyle: {
+              bold: true,
+            },
+            fields: 'bold',
+          },
+        });
+        break;
+      }
     }
 
     if (paragraphText.startsWith('Here’s my venmo - ') && paragraphText.includes(venmoUrl)) {
