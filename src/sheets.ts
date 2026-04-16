@@ -53,7 +53,7 @@ export async function loadRows(
     return { title: sheetTitle, rows: [], skipped: [] };
   }
 
-  const headerIndex = new Map(header.map((name, i) => [name, i]));
+  const headerIndex = new Map(header.map((name, i) => [normalizeHeaderName(name), i]));
   const rows: DogRow[] = [];
   const skipped: Array<{ rowNumber: number; reason: string }> = [];
   const statusColumn = options.trackingColumns?.status || COLUMN_NAMES.status;
@@ -198,8 +198,18 @@ export async function ensureCustomTrackingColumns(
 }
 
 function pick(row: string[], headerIndex: Map<string, number>, name: string): string | undefined {
-  const idx = headerIndex.get(name);
+  const idx = headerIndex.get(normalizeHeaderName(name));
   return idx === undefined ? undefined : row[idx];
+}
+
+function normalizeHeaderName(value: string | undefined): string {
+  return (value || '')
+    .normalize('NFKC')
+    .replace(/\s+/g, ' ')
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .trim()
+    .toLowerCase();
 }
 
 function columnToLetter(col: number): string {
