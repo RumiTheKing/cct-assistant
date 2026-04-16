@@ -176,12 +176,6 @@
           results.textContent = 'Loading preview...';
           const data = await post('/api/structured/preview', { sheetUrl: sheetUrl.value });
           renderPreview(data);
-          if ((data.warnings?.multiDogRows || []).length) {
-            window.alert(`${data.warnings.multiDogRows.length} row(s) with multiple dogs were detected and will be marked for manual review.`);
-          }
-          if ((data.warnings?.trainingRows || []).length) {
-            window.alert(`${data.warnings.trainingRows.length} row(s) with training selected were detected and will be marked for manual review.`);
-          }
           actionNote.textContent = 'Structured preview loaded.';
         } catch (err) {
           const message = String(err.message || 'Structured preview failed.');
