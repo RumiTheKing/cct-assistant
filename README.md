@@ -1,5 +1,23 @@
 # Cohesive Canine Assistant
 
+## Mac Quick Start
+
+If you want the shortest possible fresh-machine setup:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv)"
+brew install git node
+git clone git@github.com:RumiTheKing/cct-assistant.git
+cd cct-assistant
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Then open `http://localhost:3017` and connect Google in the app.
+
 Cohesive Canine Assistant is a small local web app for manual dog/client workflows.
 
 It currently includes:

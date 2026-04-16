@@ -56,7 +56,7 @@ const DEFAULT_STRUCTURED_SETTINGS: StructuredTemplateSettings = {
     '{{totalCalendarDays}}',
     'Add-ons:',
     '{{addOnsSummary}}',
-    'Holiday (y/n): {{holidayYN}}',
+    'Holiday Days Charged: {{holidayDaysCharged}}',
     'Total Invoice:',
     '{{totalInvoice}}',
     '',
@@ -152,6 +152,7 @@ function getTemplateValues(row: DogRow): Record<string, string> {
     totalCalendarDays: 'N/A',
     addOnsSummary: 'None',
     holidayYN: 'n',
+    holidayDaysCharged: '0',
     totalInvoice: 'N/A',
     venmoUrl: 'https://venmo.com/u/cohesivecanine',
   };

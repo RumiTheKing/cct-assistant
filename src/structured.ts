@@ -201,6 +201,7 @@ type StructuredAnalysis = {
   totalCalendarDays: number;
   billedCalendarDays: number;
   holidayChargeApplied: boolean;
+  holidayDaysCharged: number;
   baseCharge: number;
   addOnsCharge: number;
   totalInvoice: number;
@@ -265,6 +266,7 @@ function analyzeStructuredRow(row: DogRow): StructuredAnalysis {
     totalCalendarDays: calendarCharges.totalCalendarDays,
     billedCalendarDays: calendarCharges.billedCalendarDays,
     holidayChargeApplied: calendarCharges.holidayChargeApplied,
+    holidayDaysCharged: calendarCharges.holidayDaysCharged * dogCount,
     baseCharge,
     addOnsCharge: scaledAddOnsCharge,
     totalInvoice: baseCharge + scaledAddOnsCharge,
@@ -283,7 +285,13 @@ function calculateCalendarCharges(row: DogRow) {
   const checkOutHour = parseSheetTimeHour(row.checkOutTime);
 
   if (!checkInDate || !checkOutDate) {
-    return { totalCalendarDays: 0, billedCalendarDays: 0, totalCharge: 0, holidayChargeApplied: false };
+    return {
+      totalCalendarDays: 0,
+      billedCalendarDays: 0,
+      holidayDaysCharged: 0,
+      totalCharge: 0,
+      holidayChargeApplied: false,
+    };
   }
 
   const days: Date[] = [];
@@ -295,6 +303,7 @@ function calculateCalendarCharges(row: DogRow) {
 
   let totalCharge = 0;
   let billedCalendarDays = 0;
+  let holidayDaysCharged = 0;
   let holidayChargeApplied = false;
 
   for (let i = 0; i < days.length; i++) {
@@ -312,6 +321,7 @@ function calculateCalendarCharges(row: DogRow) {
 
     const iso = toIsoDate(current);
     if (US_BANK_HOLIDAYS.includes(iso)) {
+      holidayDaysCharged += dayCharge <= 40 ? 0.5 : 1;
       dayCharge *= 2;
       holidayChargeApplied = true;
     }
@@ -322,6 +332,7 @@ function calculateCalendarCharges(row: DogRow) {
   return {
     totalCalendarDays: days.length,
     billedCalendarDays,
+    holidayDaysCharged,
     totalCharge,
     holidayChargeApplied,
   };
@@ -336,6 +347,7 @@ async function buildStructuredSection(row: DogRow, analysis: StructuredAnalysis)
     totalCalendarDays: formatBilledDays(analysis.billedCalendarDays),
     addOnsSummary: analysis.addOnsSummary,
     holidayYN: analysis.holidayChargeApplied ? 'y' : 'n',
+    holidayDaysCharged: formatBilledDays(analysis.holidayDaysCharged),
     totalInvoice: `$${analysis.totalInvoice}`,
   });
 }
@@ -357,7 +369,7 @@ function buildDocumentNormalizationRequests(
     'Check in:',
     'Check out:',
     'Please text me when you\'re on your way!',
-    'Holiday (y/n):',
+    'Holiday Days Charged:',
   ];
 
   for (const item of paragraphs) {
