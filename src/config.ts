@@ -37,6 +37,18 @@ export const COLUMN_NAMES = {
   goals: 'Goals with your dog',
 } as const;
 
+export const COLUMN_ALIASES: Partial<Record<keyof typeof COLUMN_NAMES, string[]>> = {
+  email: ['Email Address', 'Email', 'Your Email', 'Your Email '],
+  dogName: ['Dog Name', 'Your Dog\'s Name', 'Your Dogs Name'],
+  clientName: ['Name', 'Your Name'],
+  dogAge: ['Dog Age', 'Your Dog\'s Age', 'Your Dogs Age'],
+  dogBreed: ['Dog Breed', 'Your Dog\'s Breed', 'Dogs Breed'],
+  checkInDate: ['Check In Date', 'Check in date', 'Check in date -'],
+  checkInTime: ['Check In Time', 'Check in time', 'Check in time - '],
+  checkOutDate: ['Check Out Date', 'Check out date', 'Check out date -'],
+  checkOutTime: ['Check Out Time', 'Check out time', 'Check out time - '],
+};
+
 export const YELLOW_RGB = { red: 1, green: 0.996, blue: 0 };
 export const ORANGE_RGB = { red: 1, green: 0.6, blue: 0.2 };
 export const RED_RGB = { red: 0.8, green: 0.2, blue: 0.2 };

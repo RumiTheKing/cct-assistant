@@ -1,5 +1,5 @@
 import { sheets_v4 } from 'googleapis';
-import { COLUMN_NAMES } from './config';
+import { COLUMN_ALIASES, COLUMN_NAMES } from './config';
 import { DogRow, PreviewResult, SheetHeaderInfo } from './types';
 
 export type LoadRowsOptions = {
@@ -198,8 +198,20 @@ export async function ensureCustomTrackingColumns(
 }
 
 function pick(row: string[], headerIndex: Map<string, number>, name: string): string | undefined {
-  const idx = headerIndex.get(normalizeHeaderName(name));
-  return idx === undefined ? undefined : row[idx];
+  const namesToTry = [name, ...getAliasNames(name)];
+
+  for (const candidate of namesToTry) {
+    const idx = headerIndex.get(normalizeHeaderName(candidate));
+    if (idx !== undefined) return row[idx];
+  }
+
+  return undefined;
+}
+
+function getAliasNames(name: string): string[] {
+  const entry = Object.entries(COLUMN_NAMES).find(([, value]) => value === name)?.[0] as keyof typeof COLUMN_NAMES | undefined;
+  if (!entry) return [];
+  return COLUMN_ALIASES[entry] || [];
 }
 
 function normalizeHeaderName(value: string | undefined): string {
