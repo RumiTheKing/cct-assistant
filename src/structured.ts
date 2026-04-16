@@ -350,7 +350,7 @@ async function buildStructuredSection(row: DogRow, analysis: StructuredAnalysis)
     totalCalendarDays: formatBilledDays(analysis.billedCalendarDays),
     addOnsSummary: analysis.addOnsSummary,
     holidayYN: analysis.holidayChargeApplied ? 'y' : 'n',
-    holidayDaysCharged: formatBilledDays(analysis.holidayDaysCharged),
+    holidayDaysCharged: formatHolidayDaysCharged(analysis.holidayDaysCharged, analysis.dogCount),
     totalInvoice: `$${analysis.totalInvoice}`,
   });
 }
@@ -480,6 +480,20 @@ function getDogCount(dogName: string): number {
 
 function formatBilledDays(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function formatHolidayDaysCharged(value: number, dogCount: number): string {
+  const base = formatBilledDays(value);
+  const notes: string[] = [];
+
+  if (!Number.isInteger(value)) {
+    notes.push('including half-days');
+  }
+  if (dogCount > 1) {
+    notes.push('per dog per holiday');
+  }
+
+  return notes.length ? `${base} (${notes.join(', ')})` : base;
 }
 
 function parseSheetDate(value?: string): Date | null {
