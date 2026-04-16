@@ -371,6 +371,7 @@ function buildDocumentNormalizationRequests(
     'Check out:',
     'Please text me when you\'re on your way!',
     'Holiday Days Charged:',
+    'Total Calendar Days Billed:',
   ];
 
   for (const item of paragraphs) {
