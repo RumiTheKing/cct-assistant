@@ -365,7 +365,6 @@ function buildDocumentNormalizationRequests(
   const paragraphs = document.body?.content?.filter((item) => item.paragraph) || [];
   const fullLineBolds = new Set([
     'My address is: 14719 S Oak Point Dr Bluffdale, UT 84065',
-    'Add-ons:',
     'Please send full payment 1+ day before check in. :)',
   ]);
   const prefixBolds = [
@@ -374,6 +373,7 @@ function buildDocumentNormalizationRequests(
     'Please text me when you\'re on your way!',
     'Holiday Days Charged:',
     'Total Calendar Days Billed:',
+    'Add-ons:',
   ];
 
   for (const item of paragraphs) {
