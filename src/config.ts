@@ -38,15 +38,25 @@ export const COLUMN_NAMES = {
 } as const;
 
 export const COLUMN_ALIASES: Partial<Record<keyof typeof COLUMN_NAMES, string[]>> = {
-  email: ['Email Address', 'Email', 'Your Email', 'Your Email '],
-  dogName: ['Dog Name', 'Your Dog\'s Name', 'Your Dogs Name'],
-  clientName: ['Name', 'Your Name'],
-  dogAge: ['Dog Age', 'Your Dog\'s Age', 'Your Dogs Age'],
-  dogBreed: ['Dog Breed', 'Your Dog\'s Breed', 'Dogs Breed'],
-  checkInDate: ['Check In Date', 'Check in date', 'Check in date -'],
-  checkInTime: ['Check In Time', 'Check in time', 'Check in time - '],
-  checkOutDate: ['Check Out Date', 'Check out date', 'Check out date -'],
-  checkOutTime: ['Check Out Time', 'Check out time', 'Check out time - '],
+  email: ['Email Address', 'Email', 'Your Email', 'Your Email ', 'Owner Email', 'Client Email'],
+  dogName: [
+    'Dog Name',
+    'Dog name',
+    'Name of Dog',
+    'Dog\'s Name',
+    'Dogs Name',
+    'Your Dog\'s Name',
+    'Your Dogs Name',
+    'What is your dog\'s name?',
+    'What is your dogs name?',
+  ],
+  clientName: ['Name', 'Your Name', 'Owner Name', 'Client Name'],
+  dogAge: ['Dog Age', 'Your Dog\'s Age', 'Your Dogs Age', 'Age'],
+  dogBreed: ['Dog Breed', 'Your Dog\'s Breed', 'Dogs Breed', 'Breed'],
+  checkInDate: ['Check In Date', 'Check in date', 'Check in date -', 'Check-In Date'],
+  checkInTime: ['Check In Time', 'Check in time', 'Check in time - ', 'Check-In Time'],
+  checkOutDate: ['Check Out Date', 'Check out date', 'Check out date -', 'Check-Out Date'],
+  checkOutTime: ['Check Out Time', 'Check out time', 'Check out time - ', 'Check-Out Time'],
 };
 
 export const YELLOW_RGB = { red: 1, green: 0.996, blue: 0 };
