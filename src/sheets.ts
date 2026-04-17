@@ -99,6 +99,10 @@ export async function loadRows(
       printDocUrl: pick(raw, headerIndex, docUrlColumn),
     };
 
+    if (isCompletelyEmptyRow(row)) {
+      continue;
+    }
+
     if (requireEmail && !row.email?.trim()) {
       skipped.push({ rowNumber, reason: 'Missing email address' });
       continue;
@@ -195,6 +199,12 @@ export async function ensureCustomTrackingColumns(
   }
 
   return indexes;
+}
+
+function isCompletelyEmptyRow(row: DogRow): boolean {
+  return Object.entries(row)
+    .filter(([key]) => key !== 'rowNumber')
+    .every(([, value]) => !String(value || '').trim());
 }
 
 function pick(row: string[], headerIndex: Map<string, number>, name: string): string | undefined {
