@@ -99,7 +99,7 @@ export async function loadRows(
       printDocUrl: pick(raw, headerIndex, docUrlColumn),
     };
 
-    if (isCompletelyEmptyRow(row)) {
+    if (isCompletelyEmptyRawRow(raw)) {
       continue;
     }
 
@@ -201,10 +201,8 @@ export async function ensureCustomTrackingColumns(
   return indexes;
 }
 
-function isCompletelyEmptyRow(row: DogRow): boolean {
-  return Object.entries(row)
-    .filter(([key]) => key !== 'rowNumber')
-    .every(([, value]) => !String(value || '').trim());
+function isCompletelyEmptyRawRow(row: string[]): boolean {
+  return row.every((value) => !String(value || '').trim());
 }
 
 function pick(row: string[], headerIndex: Map<string, number>, name: string): string | undefined {
