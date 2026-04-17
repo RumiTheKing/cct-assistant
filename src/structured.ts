@@ -55,7 +55,11 @@ export async function runStructuredBoardTool(
 
   for (const row of preview.rows) {
     try {
-      const analysis = analyzeStructuredRow(row);
+      const structuredSettings = await loadStructuredTemplateSettings();
+      const analysis = analyzeStructuredRow(row, {
+        fullDayPrice: structuredSettings.fullDayPrice,
+        halfDayPrice: structuredSettings.halfDayPrice,
+      });
 
       if (analysis.trainingSelected) {
         warnings.trainingRows.push({
@@ -212,11 +216,14 @@ type StructuredAnalysis = {
   trainingDetail: string;
 };
 
-function analyzeStructuredRow(row: DogRow): StructuredAnalysis {
+function analyzeStructuredRow(
+  row: DogRow,
+  pricing: { fullDayPrice: number; halfDayPrice: number }
+): StructuredAnalysis {
   const dogName = row.dogName?.trim() || '';
   const dogCount = getDogCount(dogName);
   const multiDogDetected = dogCount > 1;
-  const calendarCharges = calculateCalendarCharges(row);
+  const calendarCharges = calculateCalendarCharges(row, pricing);
   const optionalText = (row.optionalAdventures || '').toLowerCase();
   const bathRequest = (row.bathRequest || '').toLowerCase();
   const trainingDetail = (row.trainingDetails || '').trim();
@@ -281,7 +288,10 @@ function analyzeStructuredRow(row: DogRow): StructuredAnalysis {
   };
 }
 
-function calculateCalendarCharges(row: DogRow) {
+function calculateCalendarCharges(
+  row: DogRow,
+  pricing: { fullDayPrice: number; halfDayPrice: number }
+) {
   const checkInDate = parseSheetDate(row.checkInDate);
   const checkOutDate = parseSheetDate(row.checkOutDate);
   const checkInHour = parseSheetTimeHour(row.checkInTime);
@@ -311,20 +321,20 @@ function calculateCalendarCharges(row: DogRow) {
 
   for (let i = 0; i < days.length; i++) {
     const current = days[i];
-    let dayCharge = 80;
+    let dayCharge = pricing.fullDayPrice;
 
     if (i === 0 && checkInHour !== null && checkInHour >= 15) {
-      dayCharge = 40;
+      dayCharge = pricing.halfDayPrice;
     }
     if (i === days.length - 1 && checkOutHour !== null && checkOutHour < 12) {
-      dayCharge = Math.min(dayCharge, 40);
+      dayCharge = Math.min(dayCharge, pricing.halfDayPrice);
     }
 
-    billedCalendarDays += dayCharge <= 40 ? 0.5 : 1;
+    billedCalendarDays += dayCharge <= pricing.halfDayPrice ? 0.5 : 1;
 
     const iso = toIsoDate(current);
     if (US_BANK_HOLIDAYS.includes(iso)) {
-      holidayDaysCharged += dayCharge <= 40 ? 0.5 : 1;
+      holidayDaysCharged += dayCharge <= pricing.halfDayPrice ? 0.5 : 1;
       dayCharge *= 2;
       holidayChargeApplied = true;
     }

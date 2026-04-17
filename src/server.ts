@@ -146,9 +146,11 @@ app.get('/api/structured-template-settings', async (_req, res) => {
 
 app.post('/api/structured-template-settings', async (req, res) => {
   try {
-    const { bodyTemplate } = req.body || {};
+    const { bodyTemplate, fullDayPrice, halfDayPrice } = req.body || {};
     const settings = await saveStructuredTemplateSettings({
       bodyTemplate: String(bodyTemplate || ''),
+      fullDayPrice: Number(fullDayPrice),
+      halfDayPrice: Number(halfDayPrice),
     });
     res.json({ ok: true, settings });
   } catch (error) {

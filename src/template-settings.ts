@@ -9,6 +9,8 @@ export type TemplateSettings = {
 
 export type StructuredTemplateSettings = {
   bodyTemplate: string;
+  fullDayPrice: number;
+  halfDayPrice: number;
 };
 
 const SETTINGS_DIR = path.join(process.cwd(), 'state');
@@ -64,6 +66,8 @@ const DEFAULT_STRUCTURED_SETTINGS: StructuredTemplateSettings = {
     'Here’s my venmo - {{venmoUrl}}',
     '',
   ].join('\n'),
+  fullDayPrice: 80,
+  halfDayPrice: 40,
 };
 
 export async function loadTemplateSettings(): Promise<TemplateSettings> {
@@ -100,6 +104,8 @@ export async function loadStructuredTemplateSettings(): Promise<StructuredTempla
     const parsed = JSON.parse(raw) as Partial<StructuredTemplateSettings>;
     return {
       bodyTemplate: parsed.bodyTemplate || DEFAULT_STRUCTURED_SETTINGS.bodyTemplate,
+      fullDayPrice: normalizePrice(parsed.fullDayPrice, DEFAULT_STRUCTURED_SETTINGS.fullDayPrice),
+      halfDayPrice: normalizePrice(parsed.halfDayPrice, DEFAULT_STRUCTURED_SETTINGS.halfDayPrice),
     };
   } catch {
     return DEFAULT_STRUCTURED_SETTINGS;
@@ -111,6 +117,8 @@ export async function saveStructuredTemplateSettings(
 ): Promise<StructuredTemplateSettings> {
   const next: StructuredTemplateSettings = {
     bodyTemplate: settings.bodyTemplate || DEFAULT_STRUCTURED_SETTINGS.bodyTemplate,
+    fullDayPrice: normalizePrice(settings.fullDayPrice, DEFAULT_STRUCTURED_SETTINGS.fullDayPrice),
+    halfDayPrice: normalizePrice(settings.halfDayPrice, DEFAULT_STRUCTURED_SETTINGS.halfDayPrice),
   };
 
   await fs.mkdir(SETTINGS_DIR, { recursive: true });
@@ -188,6 +196,11 @@ function parseDateOnly(value?: string): Date | null {
 
   if (!month || !day || !year) return null;
   return new Date(year, month - 1, day);
+}
+
+function normalizePrice(value: unknown, fallback: number): number {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : fallback;
 }
 
 function escapeHtml(value: string): string {
