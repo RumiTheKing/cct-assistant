@@ -226,7 +226,7 @@ function analyzeStructuredRow(row: DogRow): StructuredAnalysis {
   let addOnsCharge = 0;
 
   if (optionalText.includes('hike')) {
-    addOns.push('Hike ($100)');
+    addOns.push('Hike ($100) (Bath - Included with Hike $0)');
     addOnsCharge += 100;
   }
   if (optionalText.includes('field trip')) {
@@ -344,7 +344,7 @@ function calculateCalendarCharges(row: DogRow) {
 async function buildStructuredSection(row: DogRow, analysis: StructuredAnalysis): Promise<string> {
   const settings = await loadStructuredTemplateSettings();
   return renderTemplate(settings.bodyTemplate, row, {
-    dogName: row.dogName?.trim() || 'Dog',
+    dogName: (row.dogName?.trim() || 'Dog').toUpperCase(),
     checkIn: joinDateTime(formatSheetDate(row.checkInDate), formatSheetTime(row.checkInTime)) || 'N/A',
     checkOut: joinDateTime(formatSheetDate(row.checkOutDate), formatSheetTime(row.checkOutTime)) || 'N/A',
     totalCalendarDays: formatBilledDays(analysis.billedCalendarDays),
