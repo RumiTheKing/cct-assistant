@@ -56,7 +56,6 @@ export async function loadRows(
   const headerIndex = new Map(header.map((name, i) => [normalizeHeaderName(name), i]));
   const rows: DogRow[] = [];
   const skipped: Array<{ rowNumber: number; reason: string }> = [];
-  const completed: Array<{ rowNumber: number; reason: string }> = [];
   const statusColumn = options.trackingColumns?.status || COLUMN_NAMES.status;
   const draftIdColumn = options.trackingColumns?.draftId || COLUMN_NAMES.draftId;
   const docUrlColumn = options.trackingColumns?.docUrl || COLUMN_NAMES.printDocUrl;
@@ -113,7 +112,7 @@ export async function loadRows(
       continue;
     }
     if (row.status?.trim()) {
-      completed.push({ rowNumber, reason: row.status.trim() });
+      skipped.push({ rowNumber, reason: `Already completed: ${row.status.trim()}` });
       continue;
     }
     if (row.draftId?.trim()) {
@@ -127,7 +126,7 @@ export async function loadRows(
     rows.push(row);
   }
 
-  return { title: sheetTitle, rows, skipped, completed };
+  return { title: sheetTitle, rows, skipped };
 }
 
 export async function ensureTrackingColumns(

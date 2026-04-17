@@ -37,7 +37,6 @@ export type PreviewResult = {
   title: string;
   rows: DogRow[];
   skipped: Array<{ rowNumber: number; reason: string }>;
-  completed?: Array<{ rowNumber: number; reason: string }>;
   warnings?: {
     multiDogRows?: Array<{ rowNumber: number; dogName: string; reason: string }>;
     trainingRows?: Array<{ rowNumber: number; dogName: string; detail: string }>;

@@ -107,8 +107,9 @@
 
       function renderPreview(data) {
         const rows = data.rows || [];
-        const skipped = data.skipped || [];
-        const completed = data.completed || [];
+        const allSkipped = data.skipped || [];
+        const completed = allSkipped.filter((item) => String(item.reason || '').startsWith('Already completed:'));
+        const skipped = allSkipped.filter((item) => !String(item.reason || '').startsWith('Already completed:'));
         results.innerHTML = `
           <div>
             <p><strong>Preview loaded.</strong></p>
