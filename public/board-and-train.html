@@ -108,12 +108,14 @@
       function renderPreview(data) {
         const rows = data.rows || [];
         const skipped = data.skipped || [];
+        const completed = data.completed || [];
         results.innerHTML = `
           <div>
             <p><strong>Preview loaded.</strong></p>
             <div class="summary">
               <div class="summary-box"><span class="soft">Ready to process</span><strong>${rows.length}</strong></div>
-              <div class="summary-box"><span class="soft">Will be skipped</span><strong>${skipped.length}</strong></div>
+              <div class="summary-box"><span class="soft">Rows with issues</span><strong>${skipped.length}</strong></div>
+              <div class="summary-box"><span class="soft">Completed rows</span><strong>${completed.length}</strong></div>
             </div>
             <h3 class="section-title">Rows ready to process</h3>
             ${rows.length ? rows.slice(0, 20).map((row) => `
@@ -123,8 +125,10 @@
                 <div class="soft">Email: ${escapeHtml(maskEmail(row.email))}</div>
               </div>
             `).join('') : '<p class="soft">No rows are currently ready.</p>'}
-            <h3 class="section-title">Rows that will be skipped</h3>
-            ${skipped.length ? `<ul>${skipped.slice(0, 20).map((item) => `<li>Row ${item.rowNumber}: ${escapeHtml(item.reason)}</li>`).join('')}</ul>` : '<p class="soft">No rows will be skipped.</p>'}
+            <h3 class="section-title">Rows with issues</h3>
+            ${skipped.length ? `<ul>${skipped.slice(0, 20).map((item) => `<li>Row ${item.rowNumber}: ${escapeHtml(item.reason)}</li>`).join('')}</ul>` : '<p class="soft">No rows with issues.</p>'}
+            <h3 class="section-title">Completed rows</h3>
+            ${completed.length ? `<ul>${completed.slice(0, 20).map((item) => `<li>Row ${item.rowNumber}: ${escapeHtml(item.reason)}</li>`).join('')}</ul>` : '<p class="soft">No completed rows found.</p>'}
           </div>
         `;
       }
