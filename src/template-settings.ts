@@ -11,6 +11,11 @@ export type StructuredTemplateSettings = {
   bodyTemplate: string;
   fullDayPrice: number;
   halfDayPrice: number;
+  hikePrice: number;
+  dockDivingPrice: number;
+  fieldTripPrice: number;
+  bathUnder30Price: number;
+  bath30PlusPrice: number;
 };
 
 const SETTINGS_DIR = path.join(process.cwd(), 'state');
@@ -68,6 +73,11 @@ const DEFAULT_STRUCTURED_SETTINGS: StructuredTemplateSettings = {
   ].join('\n'),
   fullDayPrice: 80,
   halfDayPrice: 40,
+  hikePrice: 100,
+  dockDivingPrice: 65,
+  fieldTripPrice: 50,
+  bathUnder30Price: 35,
+  bath30PlusPrice: 50,
 };
 
 export async function loadTemplateSettings(): Promise<TemplateSettings> {
@@ -106,6 +116,11 @@ export async function loadStructuredTemplateSettings(): Promise<StructuredTempla
       bodyTemplate: parsed.bodyTemplate || DEFAULT_STRUCTURED_SETTINGS.bodyTemplate,
       fullDayPrice: normalizePrice(parsed.fullDayPrice, DEFAULT_STRUCTURED_SETTINGS.fullDayPrice),
       halfDayPrice: normalizePrice(parsed.halfDayPrice, DEFAULT_STRUCTURED_SETTINGS.halfDayPrice),
+      hikePrice: normalizePrice(parsed.hikePrice, DEFAULT_STRUCTURED_SETTINGS.hikePrice),
+      dockDivingPrice: normalizePrice(parsed.dockDivingPrice, DEFAULT_STRUCTURED_SETTINGS.dockDivingPrice),
+      fieldTripPrice: normalizePrice(parsed.fieldTripPrice, DEFAULT_STRUCTURED_SETTINGS.fieldTripPrice),
+      bathUnder30Price: normalizePrice(parsed.bathUnder30Price, DEFAULT_STRUCTURED_SETTINGS.bathUnder30Price),
+      bath30PlusPrice: normalizePrice(parsed.bath30PlusPrice, DEFAULT_STRUCTURED_SETTINGS.bath30PlusPrice),
     };
   } catch {
     return DEFAULT_STRUCTURED_SETTINGS;
@@ -119,6 +134,11 @@ export async function saveStructuredTemplateSettings(
     bodyTemplate: settings.bodyTemplate || DEFAULT_STRUCTURED_SETTINGS.bodyTemplate,
     fullDayPrice: normalizePrice(settings.fullDayPrice, DEFAULT_STRUCTURED_SETTINGS.fullDayPrice),
     halfDayPrice: normalizePrice(settings.halfDayPrice, DEFAULT_STRUCTURED_SETTINGS.halfDayPrice),
+    hikePrice: normalizePrice(settings.hikePrice, DEFAULT_STRUCTURED_SETTINGS.hikePrice),
+    dockDivingPrice: normalizePrice(settings.dockDivingPrice, DEFAULT_STRUCTURED_SETTINGS.dockDivingPrice),
+    fieldTripPrice: normalizePrice(settings.fieldTripPrice, DEFAULT_STRUCTURED_SETTINGS.fieldTripPrice),
+    bathUnder30Price: normalizePrice(settings.bathUnder30Price, DEFAULT_STRUCTURED_SETTINGS.bathUnder30Price),
+    bath30PlusPrice: normalizePrice(settings.bath30PlusPrice, DEFAULT_STRUCTURED_SETTINGS.bath30PlusPrice),
   };
 
   await fs.mkdir(SETTINGS_DIR, { recursive: true });

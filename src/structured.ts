@@ -59,6 +59,11 @@ export async function runStructuredBoardTool(
       const analysis = analyzeStructuredRow(row, {
         fullDayPrice: structuredSettings.fullDayPrice,
         halfDayPrice: structuredSettings.halfDayPrice,
+        hikePrice: structuredSettings.hikePrice,
+        dockDivingPrice: structuredSettings.dockDivingPrice,
+        fieldTripPrice: structuredSettings.fieldTripPrice,
+        bathUnder30Price: structuredSettings.bathUnder30Price,
+        bath30PlusPrice: structuredSettings.bath30PlusPrice,
       });
 
       if (analysis.trainingSelected) {
@@ -218,7 +223,15 @@ type StructuredAnalysis = {
 
 function analyzeStructuredRow(
   row: DogRow,
-  pricing: { fullDayPrice: number; halfDayPrice: number }
+  pricing: {
+    fullDayPrice: number;
+    halfDayPrice: number;
+    hikePrice: number;
+    dockDivingPrice: number;
+    fieldTripPrice: number;
+    bathUnder30Price: number;
+    bath30PlusPrice: number;
+  }
 ): StructuredAnalysis {
   const dogName = row.dogName?.trim() || '';
   const dogCount = getDogCount(dogName);
@@ -233,16 +246,16 @@ function analyzeStructuredRow(
   let addOnsCharge = 0;
 
   if (optionalText.includes('hike')) {
-    addOns.push('Hike ($100, Free Bath Included)');
-    addOnsCharge += 100;
+    addOns.push(`Hike ($${pricing.hikePrice}, Free Bath Included)`);
+    addOnsCharge += pricing.hikePrice;
   }
   if (optionalText.includes('field trip')) {
-    addOns.push('Field Trip ($50)');
-    addOnsCharge += 50;
+    addOns.push(`Field Trip ($${pricing.fieldTripPrice})`);
+    addOnsCharge += pricing.fieldTripPrice;
   }
   if (optionalText.includes('dock diving')) {
-    addOns.push('Dock Diving ($65, Free Bath Included)');
-    addOnsCharge += 65;
+    addOns.push(`Dock Diving ($${pricing.dockDivingPrice}, Free Bath Included)`);
+    addOnsCharge += pricing.dockDivingPrice;
   }
   if (trainingSelected) {
     addOns.push('Training selected, review manually');
@@ -256,7 +269,7 @@ function analyzeStructuredRow(
   if (bathIncluded) {
     addOns.push('Bath included ($0)');
   } else if (bathRequested) {
-    const bathCharge = !Number.isNaN(weight) && weight < 30 ? 35 : 50;
+    const bathCharge = !Number.isNaN(weight) && weight < 30 ? pricing.bathUnder30Price : pricing.bath30PlusPrice;
     addOns.push(`Bath ($${bathCharge})`);
     addOnsCharge += bathCharge;
   }

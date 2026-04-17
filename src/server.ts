@@ -146,11 +146,25 @@ app.get('/api/structured-template-settings', async (_req, res) => {
 
 app.post('/api/structured-template-settings', async (req, res) => {
   try {
-    const { bodyTemplate, fullDayPrice, halfDayPrice } = req.body || {};
+    const {
+      bodyTemplate,
+      fullDayPrice,
+      halfDayPrice,
+      hikePrice,
+      dockDivingPrice,
+      fieldTripPrice,
+      bathUnder30Price,
+      bath30PlusPrice,
+    } = req.body || {};
     const settings = await saveStructuredTemplateSettings({
       bodyTemplate: String(bodyTemplate || ''),
       fullDayPrice: Number(fullDayPrice),
       halfDayPrice: Number(halfDayPrice),
+      hikePrice: Number(hikePrice),
+      dockDivingPrice: Number(dockDivingPrice),
+      fieldTripPrice: Number(fieldTripPrice),
+      bathUnder30Price: Number(bathUnder30Price),
+      bath30PlusPrice: Number(bath30PlusPrice),
     });
     res.json({ ok: true, settings });
   } catch (error) {

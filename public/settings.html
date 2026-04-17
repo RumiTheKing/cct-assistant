@@ -15,6 +15,7 @@
       .card { border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin: 16px 0; }
       .muted { color: #666; }
       .template-grid { display: grid; gap: 12px; }
+      .compact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
       .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
       .pill { display: inline-block; padding: 3px 8px; border-radius: 999px; background: #f1f1f1; margin: 4px 6px 0 0; font-size: 0.9rem; }
       .nav { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -90,13 +91,35 @@
       <h2>SB Text Document Template Editor</h2>
       <p class="muted">Use placeholders like <code>{{dogName}}</code>, <code>{{checkIn}}</code>, <code>{{checkOut}}</code>, <code>{{totalCalendarDays}}</code>, <code>{{addOnsSummary}}</code>, <code>{{holidayYN}}</code>, and <code>{{totalInvoice}}</code>.</p>
       <div class="template-grid">
-        <div>
-          <label for="structuredFullDayPrice">Full day price</label>
-          <input id="structuredFullDayPrice" type="number" min="1" step="1" />
-        </div>
-        <div>
-          <label for="structuredHalfDayPrice">Half day price</label>
-          <input id="structuredHalfDayPrice" type="number" min="1" step="1" />
+        <div class="compact-grid">
+          <div>
+            <label for="structuredFullDayPrice">Full day price</label>
+            <input id="structuredFullDayPrice" type="number" min="1" step="1" />
+          </div>
+          <div>
+            <label for="structuredHalfDayPrice">Half day price</label>
+            <input id="structuredHalfDayPrice" type="number" min="1" step="1" />
+          </div>
+          <div>
+            <label for="structuredHikePrice">Hike price</label>
+            <input id="structuredHikePrice" type="number" min="1" step="1" />
+          </div>
+          <div>
+            <label for="structuredDockDivingPrice">Dock Diving price</label>
+            <input id="structuredDockDivingPrice" type="number" min="1" step="1" />
+          </div>
+          <div>
+            <label for="structuredFieldTripPrice">Field Trip price</label>
+            <input id="structuredFieldTripPrice" type="number" min="1" step="1" />
+          </div>
+          <div>
+            <label for="structuredBathUnder30Price">Bath under 30 lbs</label>
+            <input id="structuredBathUnder30Price" type="number" min="1" step="1" />
+          </div>
+          <div>
+            <label for="structuredBath30PlusPrice">Bath 30+ lbs</label>
+            <input id="structuredBath30PlusPrice" type="number" min="1" step="1" />
+          </div>
         </div>
         <div>
           <label for="structuredBodyTemplate">SB Text Document template</label>
@@ -124,6 +147,11 @@
       const structuredTemplateStatus = document.getElementById('structuredTemplateStatus');
       const structuredFullDayPrice = document.getElementById('structuredFullDayPrice');
       const structuredHalfDayPrice = document.getElementById('structuredHalfDayPrice');
+      const structuredHikePrice = document.getElementById('structuredHikePrice');
+      const structuredDockDivingPrice = document.getElementById('structuredDockDivingPrice');
+      const structuredFieldTripPrice = document.getElementById('structuredFieldTripPrice');
+      const structuredBathUnder30Price = document.getElementById('structuredBathUnder30Price');
+      const structuredBath30PlusPrice = document.getElementById('structuredBath30PlusPrice');
       const themeSelect = document.getElementById('themeSelect');
       const themeStatus = document.getElementById('themeStatus');
 
@@ -161,6 +189,11 @@
           structuredBodyTemplate.value = data.settings.bodyTemplate || '';
           structuredFullDayPrice.value = String(data.settings.fullDayPrice || '');
           structuredHalfDayPrice.value = String(data.settings.halfDayPrice || '');
+          structuredHikePrice.value = String(data.settings.hikePrice || '');
+          structuredDockDivingPrice.value = String(data.settings.dockDivingPrice || '');
+          structuredFieldTripPrice.value = String(data.settings.fieldTripPrice || '');
+          structuredBathUnder30Price.value = String(data.settings.bathUnder30Price || '');
+          structuredBath30PlusPrice.value = String(data.settings.bath30PlusPrice || '');
           structuredTemplateStatus.innerHTML = `SB template loaded. <span class="pill">{{dogName}}</span><span class="pill">{{checkIn}}</span><span class="pill">{{checkOut}}</span><span class="pill">{{totalCalendarDays}}</span><span class="pill">{{addOnsSummary}}</span><span class="pill">{{holidayYN}}</span><span class="pill">{{totalInvoice}}</span>`;
         } catch (err) {
           structuredTemplateStatus.textContent = err.message;
@@ -214,6 +247,11 @@
             bodyTemplate: structuredBodyTemplate.value,
             fullDayPrice: Number(structuredFullDayPrice.value),
             halfDayPrice: Number(structuredHalfDayPrice.value),
+            hikePrice: Number(structuredHikePrice.value),
+            dockDivingPrice: Number(structuredDockDivingPrice.value),
+            fieldTripPrice: Number(structuredFieldTripPrice.value),
+            bathUnder30Price: Number(structuredBathUnder30Price.value),
+            bath30PlusPrice: Number(structuredBath30PlusPrice.value),
           });
           structuredTemplateStatus.textContent = 'SB template saved.';
         } catch (err) {
@@ -231,6 +269,11 @@
           structuredBodyTemplate.value = data.settings.bodyTemplate || '';
           structuredFullDayPrice.value = String(data.settings.fullDayPrice || '');
           structuredHalfDayPrice.value = String(data.settings.halfDayPrice || '');
+          structuredHikePrice.value = String(data.settings.hikePrice || '');
+          structuredDockDivingPrice.value = String(data.settings.dockDivingPrice || '');
+          structuredFieldTripPrice.value = String(data.settings.fieldTripPrice || '');
+          structuredBathUnder30Price.value = String(data.settings.bathUnder30Price || '');
+          structuredBath30PlusPrice.value = String(data.settings.bath30PlusPrice || '');
           structuredTemplateStatus.textContent = 'SB template reset to default.';
         } catch (err) {
           structuredTemplateStatus.textContent = err.message;
