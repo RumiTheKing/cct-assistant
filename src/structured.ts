@@ -226,7 +226,7 @@ function analyzeStructuredRow(row: DogRow): StructuredAnalysis {
   let addOnsCharge = 0;
 
   if (optionalText.includes('hike')) {
-    addOns.push('Hike ($100) (Bath - Included with Hike $0)');
+    addOns.push('Hike ($100) (Free Bath Included With Hike)');
     addOnsCharge += 100;
   }
   if (optionalText.includes('field trip')) {
@@ -234,7 +234,7 @@ function analyzeStructuredRow(row: DogRow): StructuredAnalysis {
     addOnsCharge += 50;
   }
   if (optionalText.includes('dock diving')) {
-    addOns.push('Dock Diving ($65) (Bath - Included with Dock Diving $0)');
+    addOns.push('Dock Diving ($65) (Free Bath Included With Dock Diving)');
     addOnsCharge += 65;
   }
   if (trainingSelected) {
