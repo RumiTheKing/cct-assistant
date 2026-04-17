@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 import { execFile } from 'child_process';
-import { google, oauth2_v2 } from 'googleapis';
+import { google } from 'googleapis';
 import { KEYCHAIN_SERVICE, LEGACY_TOKENS_PATH } from './config';
 
 const execFileAsync = promisify(execFile);

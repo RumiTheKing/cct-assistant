@@ -5,6 +5,15 @@ function setupGoogleUi() {
 
   if (!connectionStatus || !connectBtn || !disconnectBtn) return;
 
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   async function post(url, body) {
     const res = await fetch(url, {
       method: 'POST',
@@ -22,7 +31,9 @@ function setupGoogleUi() {
       const data = await res.json();
       if (data.connected) {
         connectionStatus.className = 'status-pill status-connected';
-        connectionStatus.innerHTML = `<span class="status-dot"></span><span>Google connected${data.email ? `, ${String(data.email).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}` : ''}</span>`;
+        connectionStatus.innerHTML = data.email
+          ? `<span class="status-dot"></span><span>Google connected</span><span class="google-email">${escapeHtml(data.email)}</span>`
+          : '<span class="status-dot"></span><span>Google connected</span>';
         connectBtn.style.display = 'none';
         disconnectBtn.style.display = '';
       } else {
