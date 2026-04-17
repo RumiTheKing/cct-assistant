@@ -10,7 +10,7 @@
       body { font-family: system-ui, sans-serif; max-width: 920px; margin: 40px auto; padding: 0 16px; }
       input, button, textarea, select { font: inherit; }
       textarea { width: 100%; padding: 10px; margin: 8px 0 12px; box-sizing: border-box; min-height: 120px; }
-      button { padding: 10px 14px; cursor: pointer; }
+      button { padding: 10px 14px; cursor: pointer; border-radius: 10px; border: 1px solid #d0d7de; }
       .card { border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin: 16px 0; }
       .muted { color: #666; }
       .template-grid { display: grid; gap: 12px; }
@@ -24,6 +24,10 @@
       .topbar-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
       .topbar-button-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
       select { padding: 10px 12px; border-radius: 10px; border: 1px solid #d0d7de; background: #fff; color: inherit; }
+      .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; font-size: 0.78rem; border: 1px solid #d0d7de; }
+      .status-dot { width: 8px; height: 8px; border-radius: 999px; background: #98a2b3; }
+      .status-connected .status-dot { background: #16a34a; }
+      .status-disconnected .status-dot { background: #dc2626; }
     </style>
   </head>
   <body>
