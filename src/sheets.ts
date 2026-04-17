@@ -99,7 +99,7 @@ export async function loadRows(
       printDocUrl: pick(raw, headerIndex, docUrlColumn),
     };
 
-    if (isCompletelyEmptyRawRow(raw)) {
+    if (isEffectivelyEmptyRow(row)) {
       continue;
     }
 
@@ -201,8 +201,35 @@ export async function ensureCustomTrackingColumns(
   return indexes;
 }
 
-function isCompletelyEmptyRawRow(row: string[]): boolean {
-  return row.every((value) => !String(value || '').trim());
+function isEffectivelyEmptyRow(row: DogRow): boolean {
+  return [
+    row.email,
+    row.clientName,
+    row.checkInDate,
+    row.checkInTime,
+    row.checkOutDate,
+    row.checkOutTime,
+    row.dogName,
+    row.dogAge,
+    row.dogBreed,
+    row.goals,
+    row.issues,
+    row.confirmedDates,
+    row.emergencyContact,
+    row.feedingSchedule,
+    row.mealsPacked,
+    row.alteredStatus,
+    row.heatCyclePlan,
+    row.bathRequest,
+    row.shampooAllergies,
+    row.dogWeight,
+    row.rabiesStatus,
+    row.dogReadiness,
+    row.optionalAdventures,
+    row.etaAgreement,
+    row.extraNotes,
+    row.trainingDetails,
+  ].every((value) => !String(value || '').trim());
 }
 
 function pick(row: string[], headerIndex: Map<string, number>, name: string): string | undefined {
