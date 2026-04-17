@@ -234,7 +234,7 @@ function analyzeStructuredRow(row: DogRow): StructuredAnalysis {
     addOnsCharge += 50;
   }
   if (optionalText.includes('dock diving')) {
-    addOns.push('Dock Diving ($65)');
+    addOns.push('Dock Diving ($65) (Bath - Included with Dock Diving $0)');
     addOnsCharge += 65;
   }
   if (trainingSelected) {
