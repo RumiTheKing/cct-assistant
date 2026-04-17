@@ -4,9 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cohesive Canine Assistant Settings</title>
+    <link rel="stylesheet" href="/shared-theme.css" />
+    <script src="/shared-theme.js"></script>
     <style>
       body { font-family: system-ui, sans-serif; max-width: 920px; margin: 40px auto; padding: 0 16px; }
-      input, button, textarea { font: inherit; }
+      input, button, textarea, select { font: inherit; }
       textarea { width: 100%; padding: 10px; margin: 8px 0 12px; box-sizing: border-box; min-height: 120px; }
       button { padding: 10px 14px; margin-right: 8px; cursor: pointer; }
       .danger-button { border-color: #ef4444; color: #b91c1c; background: #fff; }
@@ -21,10 +23,11 @@
       code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
       .topbar-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
       .topbar-button-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
-      .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; font-size: 0.78rem; border: 1px solid #d0d7de; background: #fff; }
+      .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; font-size: 0.78rem; border: 1px solid #d0d7de; }
       .status-dot { width: 8px; height: 8px; border-radius: 999px; background: #98a2b3; }
       .status-connected .status-dot { background: #16a34a; }
       .status-disconnected .status-dot { background: #dc2626; }
+      select { padding: 10px 12px; border-radius: 10px; border: 1px solid #d0d7de; background: #fff; color: inherit; }
     </style>
   </head>
   <body>
@@ -48,6 +51,20 @@
 
     <h1>Settings</h1>
     <p class="muted">Edit your tool templates here.</p>
+
+    <div class="card">
+      <h2>Appearance</h2>
+      <div class="template-grid">
+        <div>
+          <label for="themeSelect">Theme</label>
+          <select id="themeSelect">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </div>
+        <div id="themeStatus" class="muted">Dark mode is the default.</div>
+      </div>
+    </div>
 
     <div class="card">
       <h2>Board and Train Email Template Editor</h2>
@@ -97,6 +114,8 @@
       const saveStructuredTemplateBtn = document.getElementById('saveStructuredTemplateBtn');
       const resetStructuredTemplateBtn = document.getElementById('resetStructuredTemplateBtn');
       const structuredTemplateStatus = document.getElementById('structuredTemplateStatus');
+      const themeSelect = document.getElementById('themeSelect');
+      const themeStatus = document.getElementById('themeStatus');
 
       async function post(url, body) {
         const res = await fetch(url, {
@@ -135,6 +154,18 @@
           structuredTemplateStatus.textContent = err.message;
         }
       }
+
+      function loadThemeSetting() {
+        const current = window.CCATheme.getTheme();
+        themeSelect.value = current;
+        themeStatus.textContent = current === 'dark' ? 'Dark mode is active.' : 'Light mode is active.';
+      }
+
+      themeSelect.addEventListener('change', () => {
+        const theme = themeSelect.value;
+        window.CCATheme.setTheme(theme);
+        themeStatus.textContent = theme === 'dark' ? 'Dark mode is active.' : 'Light mode is active.';
+      });
 
       saveTemplateBtn.addEventListener('click', async () => {
         try {
@@ -192,6 +223,7 @@
 
       loadTemplateSettings();
       loadStructuredTemplateSettings();
+      loadThemeSetting();
       window.setupGoogleUi();
     </script>
   </body>

@@ -1,0 +1,121 @@
+:root {
+  color-scheme: dark;
+  --bg: #0b1220;
+  --panel: #111827;
+  --panel-soft: #172033;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --border: #2b3648;
+  --button-bg: #111827;
+  --button-text: #e5e7eb;
+  --button-border: #334155;
+  --primary-bg: #e5e7eb;
+  --primary-text: #111827;
+  --primary-border: #e5e7eb;
+  --danger-border: #ef4444;
+  --danger-text: #fca5a5;
+  --input-bg: #0f172a;
+  --summary-bg: #0f172a;
+  --result-bg: #0f172a;
+  --pill-bg: #0f172a;
+  --code-bg: #0f172a;
+  --shadow: 0 1px 2px rgba(0,0,0,0.35);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #fcfcfc;
+  --panel: #ffffff;
+  --panel-soft: #fbfdff;
+  --text: #1f2328;
+  --muted: #667085;
+  --border: #d0d7de;
+  --button-bg: #ffffff;
+  --button-text: #1f2328;
+  --button-border: #d0d7de;
+  --primary-bg: #111827;
+  --primary-text: #ffffff;
+  --primary-border: #111827;
+  --danger-border: #ef4444;
+  --danger-text: #b91c1c;
+  --input-bg: #ffffff;
+  --summary-bg: #f8fafc;
+  --result-bg: #fbfdff;
+  --pill-bg: #ffffff;
+  --code-bg: #f6f6f6;
+  --shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+body {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+.card,
+.tool-card,
+.result-card,
+.summary-box,
+.status-pill,
+textarea,
+input,
+button,
+a.button-link,
+code,
+pre {
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.card,
+.tool-card {
+  background: var(--panel) !important;
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.result-card,
+.summary-box {
+  background: var(--panel-soft) !important;
+  border-color: var(--border) !important;
+}
+
+.muted,
+.soft {
+  color: var(--muted) !important;
+}
+
+button,
+a.button-link {
+  background: var(--button-bg) !important;
+  color: var(--button-text) !important;
+  border-color: var(--button-border) !important;
+}
+
+button.primary {
+  background: var(--primary-bg) !important;
+  color: var(--primary-text) !important;
+  border-color: var(--primary-border) !important;
+}
+
+.danger-button {
+  border-color: var(--danger-border) !important;
+  color: var(--danger-text) !important;
+}
+
+input,
+textarea,
+.status-pill,
+pre,
+code {
+  background: var(--input-bg) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+code {
+  background: var(--code-bg) !important;
+}
+
+.pill {
+  background: var(--pill-bg) !important;
+  color: var(--text) !important;
+}

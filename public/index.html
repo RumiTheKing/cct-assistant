@@ -4,22 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cohesive Canine Assistant</title>
+    <link rel="stylesheet" href="/shared-theme.css" />
+    <script src="/shared-theme.js"></script>
     <style>
-      body { font-family: system-ui, sans-serif; max-width: 980px; margin: 40px auto; padding: 0 16px; background: #fcfcfc; color: #1f2328; }
+      body { font-family: system-ui, sans-serif; max-width: 980px; margin: 40px auto; padding: 0 16px; }
       button { padding: 10px 14px; cursor: pointer; border-radius: 10px; border: 1px solid #d0d7de; background: #fff; font: inherit; }
       button:disabled { opacity: 0.6; cursor: not-allowed; }
       .danger-button { border-color: #ef4444; color: #b91c1c; background: #fff; }
-      .card { border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; margin: 16px 0; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+      .card { border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; margin: 16px 0; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
       .muted { color: #667085; }
       .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
       .topbar-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
       .topbar-button-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
-      .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; font-size: 0.78rem; border: 1px solid #d0d7de; background: #fff; }
+      .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; font-size: 0.78rem; border: 1px solid #d0d7de; }
       .status-dot { width: 8px; height: 8px; border-radius: 999px; background: #98a2b3; }
       .status-connected .status-dot { background: #16a34a; }
       .status-disconnected .status-dot { background: #dc2626; }
       .tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 18px; }
-      .tool-card { border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px; background: #fbfdff; }
+      .tool-card { border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px; }
       .tool-card h2 { margin-top: 0; margin-bottom: 8px; }
       .tool-card p { margin-bottom: 14px; }
       a.button-link { display: inline-block; padding: 10px 14px; border: 1px solid #d0d7de; border-radius: 10px; text-decoration: none; color: inherit; background: #fff; }
