@@ -11,6 +11,7 @@ import {
   clearSavedTokens,
   exchangeCodeForTokens,
   getAuthUrl,
+  getConnectedAccountEmail,
   getTokenPath,
   hasSavedTokens,
 } from './auth';
@@ -30,7 +31,12 @@ app.use(express.json());
 app.use(express.static(path.join(process.cwd(), 'public')));
 
 app.get('/api/health', async (_req, res) => {
-  res.json({ ok: true, connected: await hasSavedTokens() });
+  const connected = await hasSavedTokens();
+  res.json({
+    ok: true,
+    connected,
+    email: connected ? await getConnectedAccountEmail() : null,
+  });
 });
 
 app.get('/auth/google/start', (_req, res) => {

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 import { execFile } from 'child_process';
-import { google } from 'googleapis';
+import { google, oauth2_v2 } from 'googleapis';
 import { KEYCHAIN_SERVICE, LEGACY_TOKENS_PATH } from './config';
 
 const execFileAsync = promisify(execFile);
@@ -56,6 +56,21 @@ export async function loadSavedTokens() {
 
 export async function hasSavedTokens() {
   return Boolean(await loadSavedTokens());
+}
+
+export async function getConnectedAccountEmail(): Promise<string | null> {
+  const tokens = await loadSavedTokens();
+  if (!tokens) return null;
+
+  try {
+    const client = createOAuthClient();
+    client.setCredentials(tokens);
+    const oauth2 = google.oauth2({ version: 'v2', auth: client });
+    const me = await oauth2.userinfo.get();
+    return me.data.email || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function clearSavedTokens() {
