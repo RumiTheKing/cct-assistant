@@ -144,7 +144,18 @@ async function loadTokensFromKeychain() {
   }
 }
 
-function getEmailFromTokens(tokens: { id_token?: string | null }): string | null {
+function getEmailFromTokens(tokens: {
+  id_token?: string | null;
+  email?: string | null;
+  account_email?: string | null;
+  user_email?: string | null;
+}): string | null {
+  for (const candidate of [tokens.email, tokens.account_email, tokens.user_email]) {
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+
   const idToken = tokens.id_token;
   if (!idToken) return null;
 
@@ -152,8 +163,19 @@ function getEmailFromTokens(tokens: { id_token?: string | null }): string | null
   if (parts.length < 2) return null;
 
   try {
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as { email?: unknown };
-    return typeof payload.email === 'string' ? payload.email : null;
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as {
+      email?: unknown;
+      email_address?: unknown;
+      preferred_username?: unknown;
+    };
+
+    for (const candidate of [payload.email, payload.email_address, payload.preferred_username]) {
+      if (typeof candidate === 'string' && candidate.trim()) {
+        return candidate.trim();
+      }
+    }
+
+    return null;
   } catch {
     return null;
   }
