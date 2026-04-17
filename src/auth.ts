@@ -62,6 +62,9 @@ export async function getConnectedAccountEmail(): Promise<string | null> {
   const tokens = await loadSavedTokens();
   if (!tokens) return null;
 
+  const tokenEmail = getEmailFromTokens(tokens);
+  if (tokenEmail) return tokenEmail;
+
   try {
     const client = createOAuthClient();
     client.setCredentials(tokens);
@@ -138,6 +141,21 @@ async function loadTokensFromKeychain() {
   } catch (error) {
     if (isNotFoundError(error)) return null;
     throw new Error(`Failed to load Google tokens from macOS Keychain: ${formatExecError(error)}`);
+  }
+}
+
+function getEmailFromTokens(tokens: { id_token?: string | null }): string | null {
+  const idToken = tokens.id_token;
+  if (!idToken) return null;
+
+  const parts = idToken.split('.');
+  if (parts.length < 2) return null;
+
+  try {
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as { email?: unknown };
+    return typeof payload.email === 'string' ? payload.email : null;
+  } catch {
+    return null;
   }
 }
 
