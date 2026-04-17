@@ -121,6 +121,9 @@
             <input id="structuredBath30PlusPrice" type="number" min="1" step="1" />
           </div>
         </div>
+        <div class="button-row">
+          <button id="saveStructuredPricingBtn">Save Pricing</button>
+        </div>
         <div>
           <label for="structuredBodyTemplate">SB Text Document template</label>
           <textarea id="structuredBodyTemplate" style="min-height: 320px"></textarea>
@@ -143,6 +146,7 @@
 
       const structuredBodyTemplate = document.getElementById('structuredBodyTemplate');
       const saveStructuredTemplateBtn = document.getElementById('saveStructuredTemplateBtn');
+      const saveStructuredPricingBtn = document.getElementById('saveStructuredPricingBtn');
       const resetStructuredTemplateBtn = document.getElementById('resetStructuredTemplateBtn');
       const structuredTemplateStatus = document.getElementById('structuredTemplateStatus');
       const structuredFullDayPrice = document.getElementById('structuredFullDayPrice');
@@ -240,9 +244,9 @@
         }
       });
 
-      saveStructuredTemplateBtn.addEventListener('click', async () => {
+      async function saveStructuredSettings(statusMessage) {
         try {
-          structuredTemplateStatus.textContent = 'Saving SB template...';
+          structuredTemplateStatus.textContent = statusMessage;
           await post('/api/structured-template-settings', {
             bodyTemplate: structuredBodyTemplate.value,
             fullDayPrice: Number(structuredFullDayPrice.value),
@@ -253,10 +257,18 @@
             bathUnder30Price: Number(structuredBathUnder30Price.value),
             bath30PlusPrice: Number(structuredBath30PlusPrice.value),
           });
-          structuredTemplateStatus.textContent = 'SB template saved.';
+          structuredTemplateStatus.textContent = 'SB settings saved.';
         } catch (err) {
           structuredTemplateStatus.textContent = err.message;
         }
+      }
+
+      saveStructuredPricingBtn.addEventListener('click', async () => {
+        await saveStructuredSettings('Saving SB pricing...');
+      });
+
+      saveStructuredTemplateBtn.addEventListener('click', async () => {
+        await saveStructuredSettings('Saving SB template...');
       });
 
       resetStructuredTemplateBtn.addEventListener('click', async () => {
