@@ -53,10 +53,10 @@ export const COLUMN_ALIASES: Partial<Record<keyof typeof COLUMN_NAMES, string[]>
   clientName: ['Name', 'Your Name', 'Owner Name', 'Client Name'],
   dogAge: ['Dog Age', 'Your Dog\'s Age', 'Your Dogs Age', 'Age'],
   dogBreed: ['Dog Breed', 'Your Dog\'s Breed', 'Dogs Breed', 'Breed'],
-  checkInDate: ['Check In Date', 'Check in date', 'Check in date -', 'Check-In Date'],
-  checkInTime: ['Check In Time', 'Check in time', 'Check in time - ', 'Check-In Time'],
-  checkOutDate: ['Check Out Date', 'Check out date', 'Check out date -', 'Check-Out Date'],
-  checkOutTime: ['Check Out Time', 'Check out time', 'Check out time - ', 'Check-Out Time'],
+  checkInDate: ['Check In Date', 'Check in date', 'Check in date -', 'Check-In Date', 'Checkin Date', 'Drop Off Date'],
+  checkInTime: ['Check In Time', 'Check in time', 'Check in time - ', 'Check-In Time', 'Checkin Time', 'Drop Off Time'],
+  checkOutDate: ['Check Out Date', 'Check out date', 'Check out date -', 'Check-Out Date', 'Checkout Date', 'Pick Up Date'],
+  checkOutTime: ['Check Out Time', 'Check out time', 'Check out time - ', 'Check-Out Time', 'Checkout Time', 'Pick Up Time'],
 };
 
 export const YELLOW_RGB = { red: 1, green: 0.996, blue: 0 };
