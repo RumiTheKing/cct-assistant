@@ -559,23 +559,18 @@ function parseSheetTimeHour(value?: string): number | null {
     return numeric;
   }
 
-  const fullMatch = raw.match(/^(\d{1,2})(?::(\d{2}))(?::(\d{2}))?\s*(am|pm)?$/i);
-  if (fullMatch) {
-    let hour = Number(fullMatch[1]);
-    const minutes = Number(fullMatch[2] || '0');
-    const seconds = Number(fullMatch[3] || '0');
-    const meridiem = (fullMatch[4] || '').toLowerCase();
-    if (meridiem === 'pm' && hour < 12) hour += 12;
-    if (meridiem === 'am' && hour === 12) hour = 0;
-    return hour + minutes / 60 + seconds / 3600;
-  }
+  const timeLike = raw.match(/(?:^|\s)(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?(?:$|\s)/i);
+  if (!timeLike) return null;
 
-  const dateLike = new Date(raw);
-  if (!Number.isNaN(dateLike.getTime())) {
-    return dateLike.getHours() + dateLike.getMinutes() / 60 + dateLike.getSeconds() / 3600;
-  }
+  let hour = Number(timeLike[1]);
+  const minutes = Number(timeLike[2] || '0');
+  const seconds = Number(timeLike[3] || '0');
+  const meridiem = (timeLike[4] || '').toLowerCase();
 
-  return null;
+  if (meridiem === 'pm' && hour < 12) hour += 12;
+  if (meridiem === 'am' && hour === 12) hour = 0;
+
+  return hour + minutes / 60 + seconds / 3600;
 }
 
 function formatSheetDate(value?: string): string | undefined {
