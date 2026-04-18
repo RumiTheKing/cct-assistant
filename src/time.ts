@@ -8,7 +8,7 @@ export function parseSheetTimeHour(value?: string): number | null {
     return numeric;
   }
 
-  const timeLike = raw.match(/(?:^|\s)(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?(?:$|\s)/i);
+  const timeLike = raw.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?/i);
   if (!timeLike) return null;
 
   let hour = Number(timeLike[1]);
