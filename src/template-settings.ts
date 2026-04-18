@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { joinDateTime } from './time';
 import { DogRow } from './types';
 
 export type TemplateSettings = {
@@ -183,36 +184,6 @@ function getTemplateValues(row: DogRow): Record<string, string> {
     totalInvoice: 'N/A',
     venmoUrl: 'https://venmo.com/u/cohesivecanine',
   };
-}
-
-function joinDateTime(date?: string, time?: string): string | undefined {
-  const normalizedDate = date?.trim();
-  const normalizedTime = formatDisplayTime(time);
-  const parts = [normalizedDate, normalizedTime].filter(Boolean);
-  return parts.length ? parts.join(' ') : undefined;
-}
-
-function formatDisplayTime(value?: string): string | undefined {
-  const input = String(value || '').trim();
-  if (!input) return undefined;
-
-  const directMatch = input.match(/^(\d{1,2}):(\d{2})(?:\s*([AP]M))?$/i);
-  if (directMatch) {
-    const [, rawHour, rawMinute, meridiem] = directMatch;
-    const hour = String(Number(rawHour));
-    const suffix = meridiem ? ` ${meridiem.toUpperCase()}` : '';
-    return `${hour}:${rawMinute}${suffix}`;
-  }
-
-  const dateLike = new Date(input);
-  if (!Number.isNaN(dateLike.getTime())) {
-    return dateLike.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  }
-
-  return input;
 }
 
 function getRecapMinutes(checkInDate?: string, checkOutDate?: string): number {
