@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { joinDateTime } from './time';
+import { formatSheetTime, joinDateTime } from './time';
 import { DogRow } from './types';
 
 export type TemplateSettings = {
@@ -158,8 +158,10 @@ export function renderTemplate(template: string, row: DogRow, extraValues: Recor
 
 function getTemplateValues(row: DogRow): Record<string, string> {
   const dogName = row.dogName?.trim() || 'your dog';
-  const checkIn = joinDateTime(row.checkInDate, row.checkInTime) || 'N/A';
-  const checkOut = joinDateTime(row.checkOutDate, row.checkOutTime) || 'N/A';
+  const checkInTime = row.checkInTime || findFallbackTime(row, ['check in time', 'check-in time', 'drop off time']);
+  const checkOutTime = row.checkOutTime || findFallbackTime(row, ['check out time', 'check-out time', 'pick up time']);
+  const checkIn = joinDateTime(row.checkInDate, checkInTime) || 'N/A';
+  const checkOut = joinDateTime(row.checkOutDate, checkOutTime) || 'N/A';
   const recapMinutes = String(getRecapMinutes(row.checkInDate, row.checkOutDate));
 
   return {
@@ -184,6 +186,21 @@ function getTemplateValues(row: DogRow): Record<string, string> {
     totalInvoice: 'N/A',
     venmoUrl: 'https://venmo.com/u/cohesivecanine',
   };
+}
+
+function findFallbackTime(row: DogRow, headerHints: string[]): string | undefined {
+  const headers = row.headerValues || [];
+  const values = row.rawValues || [];
+
+  for (let i = 0; i < headers.length; i++) {
+    const header = String(headers[i] || '').trim().toLowerCase();
+    if (!headerHints.some((hint) => header.includes(hint))) continue;
+    const value = String(values[i] || '').trim();
+    const formatted = formatSheetTime(value);
+    if (formatted) return value;
+  }
+
+  return undefined;
 }
 
 function getRecapMinutes(checkInDate?: string, checkOutDate?: string): number {

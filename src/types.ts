@@ -31,6 +31,8 @@ export type DogRow = {
   etaAgreement?: string;
   extraNotes?: string;
   trainingDetails?: string;
+  rawValues?: string[];
+  headerValues?: string[];
 };
 
 export type PreviewResult = {

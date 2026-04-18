@@ -97,6 +97,8 @@ export async function loadRows(
       status: pick(raw, headerIndex, statusColumn),
       draftId: pick(raw, headerIndex, draftIdColumn),
       printDocUrl: pick(raw, headerIndex, docUrlColumn),
+      rawValues: raw,
+      headerValues: header,
     };
 
     if (isEffectivelyEmptyRow(row)) {
