@@ -559,14 +559,23 @@ function parseSheetTimeHour(value?: string): number | null {
     return numeric;
   }
 
-  const match = raw.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
-  if (!match) return null;
-  let hour = Number(match[1]);
-  const minutes = Number(match[2] || '0');
-  const meridiem = (match[3] || '').toLowerCase();
-  if (meridiem === 'pm' && hour < 12) hour += 12;
-  if (meridiem === 'am' && hour === 12) hour = 0;
-  return hour + minutes / 60;
+  const fullMatch = raw.match(/^(\d{1,2})(?::(\d{2}))(?::(\d{2}))?\s*(am|pm)?$/i);
+  if (fullMatch) {
+    let hour = Number(fullMatch[1]);
+    const minutes = Number(fullMatch[2] || '0');
+    const seconds = Number(fullMatch[3] || '0');
+    const meridiem = (fullMatch[4] || '').toLowerCase();
+    if (meridiem === 'pm' && hour < 12) hour += 12;
+    if (meridiem === 'am' && hour === 12) hour = 0;
+    return hour + minutes / 60 + seconds / 3600;
+  }
+
+  const dateLike = new Date(raw);
+  if (!Number.isNaN(dateLike.getTime())) {
+    return dateLike.getHours() + dateLike.getMinutes() / 60 + dateLike.getSeconds() / 3600;
+  }
+
+  return null;
 }
 
 function formatSheetDate(value?: string): string | undefined {
@@ -578,10 +587,17 @@ function formatSheetDate(value?: string): string | undefined {
 function formatSheetTime(value?: string): string | undefined {
   const hour = parseSheetTimeHour(value);
   if (hour === null) return value?.trim() || undefined;
-  const wholeHour = Math.floor(hour);
-  const minutes = Math.round((hour - wholeHour) * 60);
-  const suffix = wholeHour >= 12 ? 'PM' : 'AM';
-  let displayHour = wholeHour % 12;
+
+  let wholeHour = Math.floor(hour);
+  let minutes = Math.round((hour - wholeHour) * 60);
+  if (minutes === 60) {
+    wholeHour += 1;
+    minutes = 0;
+  }
+
+  const normalizedHour = ((wholeHour % 24) + 24) % 24;
+  const suffix = normalizedHour >= 12 ? 'PM' : 'AM';
+  let displayHour = normalizedHour % 12;
   if (displayHour === 0) displayHour = 12;
   return `${displayHour}:${String(minutes).padStart(2, '0')} ${suffix}`;
 }
