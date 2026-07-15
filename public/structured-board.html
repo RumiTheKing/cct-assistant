@@ -140,6 +140,7 @@
                 <div class="soft">Client: ${escapeHtml(row.clientName || 'Unknown client')}</div>
                 <div class="soft">Check in: ${escapeHtml(row.checkInDate || 'N/A')} ${escapeHtml(row.checkInTime || '')}</div>
                 <div class="soft">Check out: ${escapeHtml(row.checkOutDate || 'N/A')} ${escapeHtml(row.checkOutTime || '')}</div>
+                <div class="soft">Holiday: ${escapeHtml(row.structuredPreview?.holidayDaysLabel || 'No holiday detected')}</div>
               </div>
             `).join('') : '<p class="soft">No rows are currently ready.</p>'}
             <h3 class="section-title">Rows that will be skipped</h3>

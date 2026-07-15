@@ -33,6 +33,10 @@ export type DogRow = {
   trainingDetails?: string;
   rawValues?: string[];
   headerValues?: string[];
+  structuredPreview?: {
+    holidayDetected?: boolean;
+    holidayDaysLabel?: string;
+  };
 };
 
 export type PreviewResult = {
