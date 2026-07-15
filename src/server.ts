@@ -114,6 +114,19 @@ app.get('/api/template-settings', async (_req, res) => {
   }
 });
 
+app.get('/api/template-settings/debug', async (_req, res) => {
+  try {
+    const settings = await loadTemplateSettings();
+    res.json({
+      ok: true,
+      subjectTemplate: settings.subjectTemplate,
+      bodyTemplate: settings.bodyTemplate,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
 app.post('/api/template-settings', async (req, res) => {
   try {
     const { subjectTemplate, bodyTemplate } = req.body || {};
