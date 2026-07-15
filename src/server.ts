@@ -119,6 +119,8 @@ app.get('/api/template-settings/debug', async (_req, res) => {
     const settings = await loadTemplateSettings();
     res.json({
       ok: true,
+      cwd: process.cwd(),
+      templatePath: path.join(process.cwd(), 'state', 'template-settings.json'),
       subjectTemplate: settings.subjectTemplate,
       bodyTemplate: settings.bodyTemplate,
     });
