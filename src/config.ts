@@ -51,7 +51,7 @@ export const COLUMN_ALIASES: Partial<Record<keyof typeof COLUMN_NAMES, string[]>
     'What is your dogs name?',
   ],
   clientName: ['Name', 'Your Name', 'Owner Name', 'Client Name'],
-  dogAge: ['Dog Age', 'Your Dog\'s Age', 'Your Dogs Age', 'Age'],
+  dogAge: ['Dog Age', 'Your Dog\'s Age', 'Your Dogs Age', 'Age', 'Dog\'s Age', 'How old is your dog?', 'Pup Age'],
   dogBreed: ['Dog Breed', 'Your Dog\'s Breed', 'Dogs Breed', 'Breed'],
   checkInDate: ['Check In Date', 'Check in date', 'Check in date -', 'Check-In Date', 'Checkin Date', 'Drop Off Date'],
   checkInTime: ['Check In Time', 'Check in time', 'Check in time - ', 'Check-In Time', 'Checkin Time', 'Drop Off Time'],
